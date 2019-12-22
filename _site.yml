@@ -12,3 +12,4 @@ navbar:
       href: part2.html
     - text: "Parte 3"
       href: part3.html
+output_dir: docs
