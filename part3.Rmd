@@ -1,0 +1,261 @@
+---
+title: "Parte 3"
+author: "Robson Ribeiro de Souza"
+date: "18/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+rm(list=ls(all=TRUE))
+list.of.packages <- c("rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(rpart) 
+library(rpart.plot) 
+```
+
+# ETAPA 3
+## Lendo o arquivo csv
+```{r}
+library(readr)
+BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
+    ";", escape_double = FALSE, col_types = cols(volatileacidity = col_double()), 
+    locale = locale(decimal_mark = ","), 
+    trim_ws = TRUE)
+#View(BaseWine_Red_e_White)
+```
+
+
+## Deixar apenas variáveis ccom características físico-químicas
+## Excluindo as variáveis : id_vinho, quality e vinho
+
+```{r}
+
+BaseVinhos <- BaseWine_Red_e_White[,c(2,3,4,5,6,7,8,9,10,11,12)]
+#view(BaseVinhos)
+
+```
+
+
+## Gerando uma amostra aleatória
+
+```{r}
+
+set.seed(10)
+amostra_vinhos <- BaseVinhos[sample(1:nrow(BaseVinhos), 600),]
+#View(amostra_vinhos)
+
+```
+
+
+## Verificando o novo formato das variáveis
+
+```{r}
+str(amostra_vinhos)
+```
+
+
+## Estatísticas descritivas da nova base
+
+```{r}
+
+summary(amostra_vinhos)
+
+```
+
+```{r}
+attach(amostra_vinhos)
+```
+
+
+## Comando para gerar em 3 linhas e 4 colunas os histogramas
+```{r}
+par (mfrow=c(3,4))
+hist(fixedacidity)
+hist(volatileacidity)
+hist(citricacid)
+hist(residualsugar)
+hist(chlorides)
+hist(freesulfurdioxide)
+hist(totalsulfurdioxide)
+hist(density)
+hist(pH)
+hist(sulphates)
+hist(alcohol)
+par (mfrow=c(1,1))
+
+```
+
+
+## Boxplot da Amostra - Geral
+```{r}
+boxplot(amostra_vinhos)
+```
+
+## Boxplot da Amostra por variável
+```{r}
+attach(amostra_vinhos)
+
+par (mfrow=c(1,1))
+boxplot(fixedacidity)
+boxplot(volatileacidity)
+boxplot(citricacid)
+boxplot(residualsugar)
+boxplot(chlorides)
+boxplot(freesulfurdioxide)
+boxplot(totalsulfurdioxide)
+boxplot(density)
+boxplot(pH)
+boxplot(sulphates)
+boxplot(alcohol)
+par (mfrow=c(1,1))
+```
+
+
+
+## Padronizando
+```{r}
+cluster_vinhos <- scale(amostra_vinhos)
+summary(cluster_vinhos)
+
+```
+
+
+## Método hierarquico
+```{r}
+hier_cluster <- hclust(dist(cluster_vinhos),method='ward.D2')
+plot(hier_cluster, ylab='distancia', cex=0.1)
+
+groups <- cutree(hier_cluster, k=5) # cut tree into 5 clusters
+# draw dendogram with red borders around the 5 clusters
+rect.hclust(hier_cluster, k=5, border="red") 
+
+groups <- cutree(hier_cluster, k=6) # cut tree into 5 clusters
+# draw dendogram with red borders around the 5 clusters
+rect.hclust(hier_cluster, k=6, border="blue") 
+
+```
+
+
+## Determine number of clusters
+```{r}
+
+wss <- (nrow(cluster_vinhos)-1)*sum(apply(cluster_vinhos ,2,var))
+for (i in 2:15) wss[i] <- sum(kmeans(cluster_vinhos ,iter.max=100,
+                                     centers=i)$withinss)
+plot(1:15, wss, type="b", xlab="Numero de Clusters",
+     ylab="Within groups sum of squares") 
+
+```
+
+
+
+## Forma gráfica
+
+```{r}
+library(tclust)
+cluster1 <- tkmeans(cluster_vinhos, k = 4, alpha = 0.00)
+plot(cluster1)
+
+```
+
+
+
+## Gerando a quantidade de cluster com Kmeans
+
+```{r}
+set.seed(2019)
+output_cluster <- kmeans(cluster_vinhos,5)
+segmento <- output_cluster$cluster
+table(segmento)
+
+```
+
+## Quais características  de cada cluster
+
+```{r}
+centros <- output_cluster$centers
+centros
+```
+
+
+```{r}
+
+# quantas rodadas até chegar nos clusters
+Qte_iter <- output_cluster$iter
+Qte_iter
+
+```
+
+## Mostrando Resultados
+```{r}
+aggregate(amostra_vinhos,by=list(segmento),FUN=mean)
+
+```
+
+## Mostrando Resultados em gráficos
+
+```{r}
+library(cluster)
+clusplot(cluster_vinhos, output_cluster$cluster, color=TRUE, shade=TRUE,
+         labels=2, lines=0 , cex=0.75)
+
+
+```
+
+## Junta os arquivos em colunas
+
+```{r}
+
+matriz <- cbind(amostra_vinhos,cluster_vinhos,segmento)
+#View(matriz)
+
+```
+
+
+## Componentes Principais.
+
+```{r}
+
+acpcor <- prcomp(cluster_vinhos, scale = TRUE) 
+summary(acpcor)
+
+```
+
+
+```{r}
+
+plot(1:ncol(cluster_vinhos), acpcor$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+```
+
+```{r}
+sum(acpcor$sdev^2)
+```
+
+```{r}
+acpcor$rotation[, 1:7]
+```
+
+
+```{r}
+biplot(acpcor, xlab = "CP1", ylab = "CP2",cex.lab = 1.0, cex.axis = 1.0)
+```
+
+```{r}
+
+acpcor <- prcomp(cluster_vinhos, scale = TRUE, retx = TRUE)
+escore1 <- acpcor$x[, 1]
+hist(escore1)
+
+```
+
+
+
+

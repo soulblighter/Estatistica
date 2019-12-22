@@ -1,0 +1,14 @@
+name: "centrao-wine"
+navbar:
+  title: "Avaliação de técnicas de mineração de dados"
+  left:
+    - text: "Trabalho"
+      href: index.html
+    - text: "Base de dados"
+      href: dados.html
+    - text: "Parte 1"
+      href: part1.html
+    - text: "Parte 2"
+      href: part2.html
+    - text: "Parte 3"
+      href: part3.html

@@ -1,0 +1,125 @@
+---
+title: "Parte 1"
+author: "Centrao"
+date: "16/12/2019"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+rm(list=ls(all=TRUE))
+list.of.packages <- c("rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+```
+
+
+## Conceitos Estatísticos para IA
+
+
+
+```{r}
+library(readr)
+BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
+     ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
+         "RED"))), locale = locale(date_names = "pt", 
+         decimal_mark = ",", grouping_mark = "."), 
+     trim_ws = TRUE)
+```
+
+
+## 1.	Análise Exploratória dos dados
+
+Removemos a coluna id_vinho para não atrapalhar no modelo já que ela não tem nenhuma relação com os vinhos em si.
+
+```{r}
+BaseWine_Red_e_White <- BaseWine_Red_e_White[,2:ncol(BaseWine_Red_e_White)]
+```
+
+
+
+```{r}
+
+#comando para gerar em 3 linhas e duas colunas os histogramas
+par (mfrow=c(3,4))
+
+hist(BaseWine_Red_e_White$fixedacidity, xlab="fixedacidity", main=NULL)
+hist(BaseWine_Red_e_White$volatileacidity, xlab="volatileacidity", main=NULL)
+hist(BaseWine_Red_e_White$citricacid, xlab="citricacid", main=NULL)
+hist(BaseWine_Red_e_White$residualsugar, xlab="residualsugar", main=NULL)
+hist(BaseWine_Red_e_White$chlorides, xlab="chlorides", main=NULL)
+hist(BaseWine_Red_e_White$freesulfurdioxide, xlab="freesulfurdioxide", main=NULL)
+hist(BaseWine_Red_e_White$totalsulfurdioxide, xlab="totalsulfurdioxide", main=NULL)
+hist(BaseWine_Red_e_White$density, xlab="density", main=NULL)
+hist(BaseWine_Red_e_White$pH, xlab="pH", main=NULL)
+hist(BaseWine_Red_e_White$sulphates, xlab="sulphates", main=NULL)
+hist(BaseWine_Red_e_White$alcohol, xlab="alcohol", main=NULL)
+hist(BaseWine_Red_e_White$quality, xlab="quality", main=NULL)
+
+
+```
+
+
+
+
+
+```{r}
+
+
+par (mfrow=c(3,4))
+
+boxplot(BaseWine_Red_e_White$fixedacidity, xlab="fixedacidity", main=NULL)
+boxplot(BaseWine_Red_e_White$volatileacidity, xlab="volatileacidity", main=NULL)
+boxplot(BaseWine_Red_e_White$citricacid, xlab="citricacid", main=NULL)
+boxplot(BaseWine_Red_e_White$residualsugar, xlab="residualsugar", main=NULL)
+boxplot(BaseWine_Red_e_White$chlorides, xlab="chlorides", main=NULL)
+boxplot(BaseWine_Red_e_White$freesulfurdioxide, xlab="freesulfurdioxide", main=NULL)
+boxplot(BaseWine_Red_e_White$totalsulfurdioxide, xlab="totalsulfurdioxide", main=NULL)
+boxplot(BaseWine_Red_e_White$density, xlab="density", main=NULL)
+boxplot(BaseWine_Red_e_White$pH, xlab="pH", main=NULL)
+boxplot(BaseWine_Red_e_White$sulphates, xlab="sulphates", main=NULL)
+boxplot(BaseWine_Red_e_White$alcohol, xlab="alcohol", main=NULL)
+boxplot(BaseWine_Red_e_White$quality, xlab="quality", main=NULL)
+
+
+```
+
+
+
+
+
+# 2.	Exclusão de outliers
+
+
+
+```{r}
+
+mod <- lm(quality ~ ., data=BaseWine_Red_e_White)
+cooksd <- cooks.distance(mod)
+
+plot(cooksd, pch=".", cex=2, main="Outliers")
+abline(h = 4*mean(cooksd, na.rm=T), col="red")  # Linha de corte
+#text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  # add labels```
+
+```
+
+
+```{r}
+
+influential = 4*mean(cooksd, na.rm=T)  # influential row numbers
+head(BaseWine_Red_e_White[influential, ])  # influential observations.
+
+```
+
+
+
+
+
+
+

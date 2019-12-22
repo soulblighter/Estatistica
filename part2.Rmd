@@ -1,0 +1,238 @@
+---
+title: "Parte 2"
+author: "Rodrigo"
+date: "18/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+rm(list=ls(all=TRUE))
+list.of.packages <- c("rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(rpart) 
+library(rpart.plot) 
+```
+
+## Etapa 2 - Classificação por vinhos "Bom" ou "Ruim"
+
+## Regressão Logística
+
+Vamos tratar a base de dados para tentar descobrir se um vinho é Bom ou Ruim através de suas características físico químicas.
+Consideramos que vinhos com nota >=6 são de boa qualidade (Bom) e as outras notas com qualidade Ruim.
+Criaremos uma nova variável (newQuality), que possui valor= 1 quando o vinho é Bom e 0 Se for ruim
+
+```{r newQuality}
+
+library(readr)
+`BaseWine_Red_e_White(1)` <- read_delim("BaseWine_Red_e_White.csv", 
+     ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
+         "RED"))), locale = locale(date_names = "pt", 
+         decimal_mark = ",", grouping_mark = "."), 
+     trim_ws = TRUE)
+
+BaseQuality <- `BaseWine_Red_e_White(1)`
+BaseQuality$newQuality <- ifelse(BaseQuality$quality >=6, 1, 0)
+
+drops <- c("id_vinho", "Vinho", "quality")
+
+BaseQuality <- BaseQuality[ , !(names(BaseQuality) %in% drops)]
+#head(BaseQuality)
+
+```
+Vamos separar a base de dados em duas: Base de treino e de teste
+```{r traintest}
+smp_size <- floor(0.75 * nrow(BaseQuality))
+set.seed(1)
+trainind <- sample(seq_len(nrow(BaseQuality)), size = smp_size)
+
+train <- BaseQuality[trainind, ]
+test <- BaseQuality[-trainind, ]
+
+```
+
+Vamos criar agora um modelo de regressão logística atráves da função glm
+
+```{r modelglm}
+modeloQuality <- glm(newQuality ~ fixedacidity + volatileacidity+ citricacid+ residualsugar+ chlorides+freesulfurdioxide+totalsulfurdioxide+density+ pH+ sulphates+ alcohol, train, family=binomial(link=logit))
+summary(modeloQuality)
+```
+
+Aplicando os valores preditos na amostra.
+Temos um resumo da variável de predição e o histograma da distribuição
+
+```{r predvalsum}
+train$predito <- fitted(modeloQuality)
+summary(train$predito)
+
+```
+
+```{r predvalhist}
+hist(train$predito)
+```
+
+Frequências Absolutas da variável predita
+
+```{r predfreqabs}
+train$fx_predito1 <- cut(train$predito, breaks=c(0,0.10,0.20,0.30,0.40,0.50,0.60,0.70,0.80,0.90,1), right=F)
+table(train$fx_predito1,train$newQuality)
+```
+
+Frequências relativas
+
+```{r predfreqrel1}
+print(prop.table(table(train$fx_predito1,train$newQuality),2), digits=2)
+
+```
+
+```{r predfreqrel2}
+plot(train$fx_predito1 , train$newQuality)
+```
+
+Vamos montar a matriz de confusão. Para o corteurte, vamos escolher o 0,5
+
+```{r predMC}
+train$fx_predito <- cut(train$predito, breaks=c(0,0.50,1), right=F)
+MC_log_treino <- table(train$newQuality, train$fx_predito , deparse.level = 2) 
+show(MC_log_treino)
+```
+
+```{r predACC}
+ACC_log = sum(diag(MC_log_treino))/sum(MC_log_treino)*100   
+show(ACC_log) 
+```
+
+O Modelo teve uma acurácia de 73%, que pode ser um bom resultado dependendo do nível de confiança adotado.
+
+## Aplicando Modelo
+Vamos agora aplicar o modelo na amostra de teste.
+
+```{r testeSum}
+predito_log_teste <- predict(modeloQuality,test,type = "response")
+summary(predito_log_teste)   
+```
+
+Em seguida vamos plotar a distribuição da variável predita
+
+```{r testeSumplot}
+hist(predito_log_teste)  
+```
+
+Matriz de Confusão para a variável predita
+
+```{r testeMC}
+test$Qual <- cut(predito_log_teste , breaks=c(0,0.50,1), right=F)
+MC_test_log <- table(test$newQuality, test$Qual , deparse.level = 2) 
+show(MC_test_log)
+```
+
+Vamos calcular a acurácia do modelo na amostra teste.
+
+```{r testeACC}
+ACC_test_log = sum(diag(MC_test_log))/sum(MC_test_log)*100  
+show(ACC_test_log) 
+```
+
+Percebemos que o valor observado é próximo à amostra de teste.
+Podemos dizer que modelo não teve overfit aparente em relação aos dados treino.
+
+```{r testePlot}
+plot(test$Qual , test$newQuality)
+```
+
+ Percebemos que o modelo é muito bom para identificar vinhos Bons utilizando a amostra de teste.
+ Entretanto, para identificar vinhos de qualidade inferior, o modelo não é tão preciso
+
+```{r testePlto}
+print(prop.table(table(test$Qual ,test$newQuality),2),digits=2)
+```
+
+
+
+## Arvore de Decisão
+Vamos Limpar a memória do R e importar novamente as informações de Vinhos
+```{r clear, include=FALSE}
+rm(list=ls())
+gc()
+```
+
+```{r import}
+library(readr)
+`BaseWine_Red_e_White(1)` <- read_delim("BaseWine_Red_e_White.csv", 
+     ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
+         "RED"))), locale = locale(date_names = "pt", 
+         decimal_mark = ",", grouping_mark = "."), 
+     trim_ws = TRUE)
+
+BaseQuality <- `BaseWine_Red_e_White(1)`
+BaseQuality$newQuality <- ifelse(BaseQuality$quality >=6, 1, 0)
+BaseQuality$newQuality <- factor(BaseQuality$newQuality)
+drops <- c("id_vinho", "Vinho", "quality")
+
+
+BaseQuality <- BaseQuality[ , !(names(BaseQuality) %in% drops)]
+head(BaseQuality)
+```
+
+Vamos separar a base de treino e de teste
+
+```{r traintest2}
+smp_size <- floor(0.75 * nrow(BaseQuality))
+set.seed(1)
+trainind <- sample(seq_len(nrow(BaseQuality)), size = smp_size)
+
+train <- BaseQuality[trainind, ]
+test <- BaseQuality[-trainind, ]
+
+```
+
+Em seguida vamos criar um modelo de árvore de decisão a partir da amostra de teste.
+A árvore sugerida pelo modelo é a seguinte:
+
+O modelo sugere um alto peso para o teor alcoolico e em segundo nível para a acidez volátil
+
+```{r model2}
+modelo_tree_1 <- rpart (newQuality ~ fixedacidity + volatileacidity+ citricacid+ residualsugar+ chlorides+freesulfurdioxide+totalsulfurdioxide+density+ pH+ sulphates+ alcohol, data = train, control = rpart.control(cp = 0.05))
+
+rpart.plot(modelo_tree_1)
+```
+
+Vamos ver o resumo da execução do modelo:
+
+```{r sumtree}
+summary(modelo_tree_1)
+```
+
+Vamos aplicar a árvore de decisão na amostra de teste
+Em seguida exibiremos a matriz de confusão
+
+```{r treeMC}
+predTree <-predict(modelo_tree_1,test,type='class')
+MCpredTree<-table(test$newQuality, predTree)
+MCpredTree
+```
+
+Em seguida vamos calcular a acurácia do modelo de árvore de decisão.
+Podemos ver que o resultado(73,66%) é muito próximo ao obtido no modelo de regressão logística (72,92%)
+
+```{r treeACC}
+diagonal <- diag(MCpredTree)
+Acc_tree_teste <- sum(diagonal)/sum(MCpredTree)
+print(Acc_tree_teste*100, digits=5)
+```
+
+Vamos calcular a matriz de confusão relativa.
+
+
+```{r treeMCrel}
+print(prop.table(table(predTree,test$newQuality),2),digits=2)
+
+```
+
+Assim como o modelo de regressão logística, a acurácia é muito maior para identificar vinhos Bons.
+Entretanto, o modelo de árvore de decisão apresentado consegue prever melhor (60%) os casos em que os vinhos não são de boa qualidade no outro modelo (56%)

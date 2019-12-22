@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Rodrigo" />
+
+
+<title>Parte 2</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Avaliação de técnicas de mineração de dados</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Trabalho</a>
+</li>
+<li>
+  <a href="dados.html">Base de dados</a>
+</li>
+<li>
+  <a href="part1.html">Parte 1</a>
+</li>
+<li>
+  <a href="part2.html">Parte 2</a>
+</li>
+<li>
+  <a href="part3.html">Parte 3</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Parte 2</h1>
+<h4 class="author">Rodrigo</h4>
+<h4 class="date">18/12/2019</h4>
+
+</div>
+
+
+<div id="etapa-2---classificação-por-vinhos-bom-ou-ruim" class="section level2">
+<h2>Etapa 2 - Classificação por vinhos “Bom” ou “Ruim”</h2>
+</div>
+<div id="regressão-logística" class="section level2">
+<h2>Regressão Logística</h2>
+<p>Vamos tratar a base de dados para tentar descobrir se um vinho é Bom ou Ruim através de suas características físico químicas. Consideramos que vinhos com nota &gt;=6 são de boa qualidade (Bom) e as outras notas com qualidade Ruim. Criaremos uma nova variável (newQuality), que possui valor= 1 quando o vinho é Bom e 0 Se for ruim</p>
+<pre class="r"><code>library(readr)
+`BaseWine_Red_e_White(1)` &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
+     &quot;;&quot;, escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c(&quot;WHITE&quot;, 
+         &quot;RED&quot;))), locale = locale(date_names = &quot;pt&quot;, 
+         decimal_mark = &quot;,&quot;, grouping_mark = &quot;.&quot;), 
+     trim_ws = TRUE)
+
+BaseQuality &lt;- `BaseWine_Red_e_White(1)`
+BaseQuality$newQuality &lt;- ifelse(BaseQuality$quality &gt;=6, 1, 0)
+
+drops &lt;- c(&quot;id_vinho&quot;, &quot;Vinho&quot;, &quot;quality&quot;)
+
+BaseQuality &lt;- BaseQuality[ , !(names(BaseQuality) %in% drops)]
+#head(BaseQuality)</code></pre>
+<p>Vamos separar a base de dados em duas: Base de treino e de teste</p>
+<pre class="r"><code>smp_size &lt;- floor(0.75 * nrow(BaseQuality))
+set.seed(1)
+trainind &lt;- sample(seq_len(nrow(BaseQuality)), size = smp_size)
+
+train &lt;- BaseQuality[trainind, ]
+test &lt;- BaseQuality[-trainind, ]</code></pre>
+<p>Vamos criar agora um modelo de regressão logística atráves da função glm</p>
+<pre class="r"><code>modeloQuality &lt;- glm(newQuality ~ fixedacidity + volatileacidity+ citricacid+ residualsugar+ chlorides+freesulfurdioxide+totalsulfurdioxide+density+ pH+ sulphates+ alcohol, train, family=binomial(link=logit))
+summary(modeloQuality)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = newQuality ~ fixedacidity + volatileacidity + citricacid + 
+##     residualsugar + chlorides + freesulfurdioxide + totalsulfurdioxide + 
+##     density + pH + sulphates + alcohol, family = binomial(link = logit), 
+##     data = train)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -3.3525  -0.9021   0.4439   0.7953   4.1030  
+## 
+## Coefficients:
+##                      Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)         1.493e+02  4.815e+01   3.101 0.001927 ** 
+## fixedacidity        1.801e-01  6.030e-02   2.987 0.002819 ** 
+## volatileacidity    -4.161e+00  3.183e-01 -13.072  &lt; 2e-16 ***
+## citricacid         -5.299e-01  2.926e-01  -1.811 0.070116 .  
+## residualsugar       1.204e-01  1.989e-02   6.056  1.4e-09 ***
+## chlorides          -1.987e+00  1.151e+00  -1.726 0.084350 .  
+## freesulfurdioxide   2.033e-02  2.967e-03   6.854  7.2e-12 ***
+## totalsulfurdioxide -8.585e-03  1.042e-03  -8.240  &lt; 2e-16 ***
+## density            -1.619e+02  4.909e+01  -3.299 0.000971 ***
+## pH                  1.172e+00  3.481e-01   3.367 0.000760 ***
+## sulphates           2.681e+00  3.127e-01   8.575  &lt; 2e-16 ***
+## alcohol             7.058e-01  7.003e-02  10.077  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 6405.1  on 4871  degrees of freedom
+## Residual deviance: 5027.2  on 4860  degrees of freedom
+## AIC: 5051.2
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<p>Aplicando os valores preditos na amostra. Temos um resumo da variável de predição e o histograma da distribuição</p>
+<pre class="r"><code>train$predito &lt;- fitted(modeloQuality)
+summary(train$predito)</code></pre>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.000221 0.441535 0.676640 0.633005 0.848348 0.996374</code></pre>
+<pre class="r"><code>hist(train$predito)</code></pre>
+<p><img src="part2_files/figure-html/predvalhist-1.png" width="672" /></p>
+<p>Frequências Absolutas da variável predita</p>
+<pre class="r"><code>train$fx_predito1 &lt;- cut(train$predito, breaks=c(0,0.10,0.20,0.30,0.40,0.50,0.60,0.70,0.80,0.90,1), right=F)
+table(train$fx_predito1,train$newQuality)</code></pre>
+<pre><code>##            
+##               0   1
+##   [0,0.1)    47  11
+##   [0.1,0.2) 189  34
+##   [0.2,0.3) 231  86
+##   [0.3,0.4) 286 151
+##   [0.4,0.5) 245 212
+##   [0.5,0.6) 282 238
+##   [0.6,0.7) 187 379
+##   [0.7,0.8) 157 504
+##   [0.8,0.9) 129 746
+##   [0.9,1)    35 723</code></pre>
+<p>Frequências relativas</p>
+<pre class="r"><code>print(prop.table(table(train$fx_predito1,train$newQuality),2), digits=2)</code></pre>
+<pre><code>##            
+##                  0      1
+##   [0,0.1)   0.0263 0.0036
+##   [0.1,0.2) 0.1057 0.0110
+##   [0.2,0.3) 0.1292 0.0279
+##   [0.3,0.4) 0.1600 0.0490
+##   [0.4,0.5) 0.1370 0.0687
+##   [0.5,0.6) 0.1577 0.0772
+##   [0.6,0.7) 0.1046 0.1229
+##   [0.7,0.8) 0.0878 0.1634
+##   [0.8,0.9) 0.0721 0.2419
+##   [0.9,1)   0.0196 0.2344</code></pre>
+<pre class="r"><code>plot(train$fx_predito1 , train$newQuality)</code></pre>
+<p><img src="part2_files/figure-html/predfreqrel2-1.png" width="672" /></p>
+<p>Vamos montar a matriz de confusão. Para o corteurte, vamos escolher o 0,5</p>
+<pre class="r"><code>train$fx_predito &lt;- cut(train$predito, breaks=c(0,0.50,1), right=F)
+MC_log_treino &lt;- table(train$newQuality, train$fx_predito , deparse.level = 2) 
+show(MC_log_treino)</code></pre>
+<pre><code>##                 train$fx_predito
+## train$newQuality [0,0.5) [0.5,1)
+##                0     998     790
+##                1     494    2590</code></pre>
+<pre class="r"><code>ACC_log = sum(diag(MC_log_treino))/sum(MC_log_treino)*100   
+show(ACC_log) </code></pre>
+<pre><code>## [1] 73.64532</code></pre>
+<p>O Modelo teve uma acurácia de 73%, que pode ser um bom resultado dependendo do nível de confiança adotado.</p>
+</div>
+<div id="aplicando-modelo" class="section level2">
+<h2>Aplicando Modelo</h2>
+<p>Vamos agora aplicar o modelo na amostra de teste.</p>
+<pre class="r"><code>predito_log_teste &lt;- predict(modeloQuality,test,type = &quot;response&quot;)
+summary(predito_log_teste)   </code></pre>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.001821 0.427668 0.676671 0.632927 0.856280 0.991117</code></pre>
+<p>Em seguida vamos plotar a distribuição da variável predita</p>
+<pre class="r"><code>hist(predito_log_teste)  </code></pre>
+<p><img src="part2_files/figure-html/testeSumplot-1.png" width="672" /></p>
+<p>Matriz de Confusão para a variável predita</p>
+<pre class="r"><code>test$Qual &lt;- cut(predito_log_teste , breaks=c(0,0.50,1), right=F)
+MC_test_log &lt;- table(test$newQuality, test$Qual , deparse.level = 2) 
+show(MC_test_log)</code></pre>
+<pre><code>##                test$Qual
+## test$newQuality [0,0.5) [0.5,1)
+##               0     331     265
+##               1     175     854</code></pre>
+<p>Vamos calcular a acurácia do modelo na amostra teste.</p>
+<pre class="r"><code>ACC_test_log = sum(diag(MC_test_log))/sum(MC_test_log)*100  
+show(ACC_test_log) </code></pre>
+<pre><code>## [1] 72.92308</code></pre>
+<p>Percebemos que o valor observado é próximo à amostra de teste. Podemos dizer que modelo não teve overfit aparente em relação aos dados treino.</p>
+<pre class="r"><code>plot(test$Qual , test$newQuality)</code></pre>
+<p><img src="part2_files/figure-html/testePlot-1.png" width="672" /></p>
+<p>Percebemos que o modelo é muito bom para identificar vinhos Bons utilizando a amostra de teste. Entretanto, para identificar vinhos de qualidade inferior, o modelo não é tão preciso</p>
+<pre class="r"><code>print(prop.table(table(test$Qual ,test$newQuality),2),digits=2)</code></pre>
+<pre><code>##          
+##              0    1
+##   [0,0.5) 0.56 0.17
+##   [0.5,1) 0.44 0.83</code></pre>
+</div>
+<div id="arvore-de-decisão" class="section level2">
+<h2>Arvore de Decisão</h2>
+<p>Vamos Limpar a memória do R e importar novamente as informações de Vinhos</p>
+<pre class="r"><code>library(readr)
+`BaseWine_Red_e_White(1)` &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
+     &quot;;&quot;, escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c(&quot;WHITE&quot;, 
+         &quot;RED&quot;))), locale = locale(date_names = &quot;pt&quot;, 
+         decimal_mark = &quot;,&quot;, grouping_mark = &quot;.&quot;), 
+     trim_ws = TRUE)
+
+BaseQuality &lt;- `BaseWine_Red_e_White(1)`
+BaseQuality$newQuality &lt;- ifelse(BaseQuality$quality &gt;=6, 1, 0)
+BaseQuality$newQuality &lt;- factor(BaseQuality$newQuality)
+drops &lt;- c(&quot;id_vinho&quot;, &quot;Vinho&quot;, &quot;quality&quot;)
+
+
+BaseQuality &lt;- BaseQuality[ , !(names(BaseQuality) %in% drops)]
+head(BaseQuality)</code></pre>
+<pre><code>## # A tibble: 6 x 12
+##   fixedacidity volatileacidity citricacid residualsugar chlorides
+##          &lt;dbl&gt;           &lt;dbl&gt;      &lt;dbl&gt;         &lt;dbl&gt;     &lt;dbl&gt;
+## 1          6.6            0.24       0.35           7.7     0.031
+## 2          6.7            0.34       0.43           1.6     0.041
+## 3         10.6            0.31       0.49           2.2     0.063
+## 4          5.4            0.18       0.24           4.8     0.041
+## 5          6.7            0.3        0.44          18.8     0.057
+## 6          6.8            0.5        0.11           1.5     0.075
+## # ... with 7 more variables: freesulfurdioxide &lt;dbl&gt;, totalsulfurdioxide &lt;dbl&gt;,
+## #   density &lt;dbl&gt;, pH &lt;dbl&gt;, sulphates &lt;dbl&gt;, alcohol &lt;dbl&gt;, newQuality &lt;fct&gt;</code></pre>
+<p>Vamos separar a base de treino e de teste</p>
+<pre class="r"><code>smp_size &lt;- floor(0.75 * nrow(BaseQuality))
+set.seed(1)
+trainind &lt;- sample(seq_len(nrow(BaseQuality)), size = smp_size)
+
+train &lt;- BaseQuality[trainind, ]
+test &lt;- BaseQuality[-trainind, ]</code></pre>
+<p>Em seguida vamos criar um modelo de árvore de decisão a partir da amostra de teste. A árvore sugerida pelo modelo é a seguinte:</p>
+<p>O modelo sugere um alto peso para o teor alcoolico e em segundo nível para a acidez volátil</p>
+<pre class="r"><code>modelo_tree_1 &lt;- rpart (newQuality ~ fixedacidity + volatileacidity+ citricacid+ residualsugar+ chlorides+freesulfurdioxide+totalsulfurdioxide+density+ pH+ sulphates+ alcohol, data = train, control = rpart.control(cp = 0.05))
+
+rpart.plot(modelo_tree_1)</code></pre>
+<p><img src="part2_files/figure-html/model2-1.png" width="672" /></p>
+<p>Vamos ver o resumo da execução do modelo:</p>
+<pre class="r"><code>summary(modelo_tree_1)</code></pre>
+<pre><code>## Call:
+## rpart(formula = newQuality ~ fixedacidity + volatileacidity + 
+##     citricacid + residualsugar + chlorides + freesulfurdioxide + 
+##     totalsulfurdioxide + density + pH + sulphates + alcohol, 
+##     data = train, control = rpart.control(cp = 0.05))
+##   n= 4872 
+## 
+##          CP nsplit rel error    xerror       xstd
+## 1 0.1423378      0 1.0000000 1.0000000 0.01881567
+## 2 0.0500000      2 0.7153244 0.7438479 0.01739118
+## 
+## Variable importance
+##            alcohol            density    volatileacidity          chlorides 
+##                 33                 18                 14                 12 
+##      residualsugar totalsulfurdioxide  freesulfurdioxide                 pH 
+##                  9                  8                  5                  1 
+##          sulphates 
+##                  1 
+## 
+## Node number 1: 4872 observations,    complexity param=0.1423378
+##   predicted class=1  expected loss=0.3669951  P(node) =1
+##     class counts:  1788  3084
+##    probabilities: 0.367 0.633 
+##   left son=2 (2482 obs) right son=3 (2390 obs)
+##   Primary splits:
+##       alcohol         &lt; 10.35   to the left,  improve=299.66350, (0 missing)
+##       density         &lt; 0.99285 to the right, improve=175.11580, (0 missing)
+##       volatileacidity &lt; 0.535   to the right, improve=111.88950, (0 missing)
+##       chlorides       &lt; 0.0455  to the right, improve=109.99970, (0 missing)
+##       citricacid      &lt; 0.235   to the left,  improve= 92.82374, (0 missing)
+##   Surrogate splits:
+##       density            &lt; 0.99409 to the right, agree=0.762, adj=0.514, (0 split)
+##       chlorides          &lt; 0.0415  to the right, agree=0.684, adj=0.356, (0 split)
+##       totalsulfurdioxide &lt; 140.5   to the right, agree=0.633, adj=0.252, (0 split)
+##       residualsugar      &lt; 7.075   to the right, agree=0.632, adj=0.249, (0 split)
+##       freesulfurdioxide  &lt; 43.75   to the right, agree=0.578, adj=0.140, (0 split)
+## 
+## Node number 2: 2482 observations,    complexity param=0.1423378
+##   predicted class=0  expected loss=0.4609186  P(node) =0.5094417
+##     class counts:  1338  1144
+##    probabilities: 0.539 0.461 
+##   left son=4 (1629 obs) right son=5 (853 obs)
+##   Primary splits:
+##       volatileacidity &lt; 0.2525  to the right, improve=130.10210, (0 missing)
+##       citricacid      &lt; 0.235   to the left,  improve= 44.21768, (0 missing)
+##       chlorides       &lt; 0.0635  to the right, improve= 32.65191, (0 missing)
+##       residualsugar   &lt; 8.975   to the left,  improve= 23.49456, (0 missing)
+##       alcohol         &lt; 9.85    to the left,  improve= 20.36710, (0 missing)
+##   Surrogate splits:
+##       pH            &lt; 3.005   to the right, agree=0.676, adj=0.057, (0 split)
+##       residualsugar &lt; 13.675  to the left,  agree=0.675, adj=0.055, (0 split)
+##       density       &lt; 0.99423 to the right, agree=0.672, adj=0.046, (0 split)
+##       sulphates     &lt; 0.375   to the right, agree=0.670, adj=0.040, (0 split)
+##       fixedacidity  &lt; 5.75    to the right, agree=0.662, adj=0.018, (0 split)
+## 
+## Node number 3: 2390 observations
+##   predicted class=1  expected loss=0.1882845  P(node) =0.4905583
+##     class counts:   450  1940
+##    probabilities: 0.188 0.812 
+## 
+## Node number 4: 1629 observations
+##   predicted class=0  expected loss=0.3437692  P(node) =0.3343596
+##     class counts:  1069   560
+##    probabilities: 0.656 0.344 
+## 
+## Node number 5: 853 observations
+##   predicted class=1  expected loss=0.3153576  P(node) =0.1750821
+##     class counts:   269   584
+##    probabilities: 0.315 0.685</code></pre>
+<p>Vamos aplicar a árvore de decisão na amostra de teste Em seguida exibiremos a matriz de confusão</p>
+<pre class="r"><code>predTree &lt;-predict(modelo_tree_1,test,type=&#39;class&#39;)
+MCpredTree&lt;-table(test$newQuality, predTree)
+MCpredTree</code></pre>
+<pre><code>##    predTree
+##       0   1
+##   0 357 239
+##   1 189 840</code></pre>
+<p>Em seguida vamos calcular a acurácia do modelo de árvore de decisão. Podemos ver que o resultado(73,66%) é muito próximo ao obtido no modelo de regressão logística (72,92%)</p>
+<pre class="r"><code>diagonal &lt;- diag(MCpredTree)
+Acc_tree_teste &lt;- sum(diagonal)/sum(MCpredTree)
+print(Acc_tree_teste*100, digits=5)</code></pre>
+<pre><code>## [1] 73.662</code></pre>
+<p>Vamos calcular a matriz de confusão relativa.</p>
+<pre class="r"><code>print(prop.table(table(predTree,test$newQuality),2),digits=2)</code></pre>
+<pre><code>##         
+## predTree    0    1
+##        0 0.60 0.18
+##        1 0.40 0.82</code></pre>
+<p>Assim como o modelo de regressão logística, a acurácia é muito maior para identificar vinhos Bons. Entretanto, o modelo de árvore de decisão apresentado consegue prever melhor (60%) os casos em que os vinhos não são de boa qualidade no outro modelo (56%)</p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+---
+title: "Base de dados"
+author: "Centrao"
+date: "16/12/2019"
+output: html_document
+---
+
+
+```{r setup, results='hide', include=FALSE, echo=FALSE, message=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+rm(list=ls(all=TRUE))
+list.of.packages <- c("rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+library(readr)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+```
+
+
+## Conceitos Estatísticos para IA
+
+```{r, echo=FALSE}
+BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
+     ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
+         "RED"))), locale = locale(date_names = "pt", 
+         decimal_mark = ",", grouping_mark = "."), 
+     trim_ws = TRUE)
+
+#str(BaseWine_Red_e_White)
+#summary(BaseWine_Red_e_White)
+
+
+BaseWine_Red_e_White[1:10, ncol(BaseWine_Red_e_White):2] %>%
+  mutate(Vinho = cell_spec(
+    Vinho,
+    color = ifelse(Vinho == 'RED', "white", "black"),
+    bold = T,
+    background = ifelse(Vinho == 'RED', "red", "white")
+  )) %>%
+  kable(escape = F, align = "c") %>%
+  kable_styling(c("striped", "condensed"), full_width = F)
+
+#head(BaseWine_Red_e_White, 5)
+```
+
+
+
+## Mostrar as variáveis
+
+```{r}
+
+str(BaseWine_Red_e_White)
+
+```
+
+
+
+## Estatisticas descritivas
+
+```{r}
+
+summary(BaseWine_Red_e_White)
+
+```

@@ -1,0 +1,76 @@
+---
+title: "Equipe Centrão"
+---
+
+# Disciplina: IAeML
+
+Trabalho: Conceitos Estatísticos para IA
+
+Utilizando a base descrita e disponibilizada de vinhos desta região de Portugal com as variáveis de características (composição) dos vinhos.
+
+# Etapa 1:
+
+Faça um algoritmo que estime a variável “Quality” em função das características físico-químicas dos vinhos;
+
+1.	Análise Exploratória dos dados
+
+2.	Exclusão de outliers, caso necessário (sempre explicando a opção)
+
+3.	Treinamento dos modelos e Validação 
+
+Em cada opção de modelo colocar a saída do modelo e sua respectiva métrica validação.
+
+4.	Para cada etapa anterior colocar comentários sobre a técnica utilizada e análise sobre as variáveis utilizadas e seus respectivos “achados”  
+
+	Técnicas: Regressão Linear, Árvore de Regressão
+
+5.	Com a métrica correta faça a comparação entre os diferentes algoritmos e qual foi o melhor entre eles.
+
+
+# Etapa 2:
+ 
+Sabendo que os vinhos com notas>=6 são considerados vinhos de boa qualidade faça um algoritmo que classifique os vinhos em “Bom” ou “Ruim” em função de suas características físico-químicas;
+
+1.	Definição da variável resposta
+
+2.	Análise Exploratória dos dados
+
+3.	Treinamento dos modelos e Validação 
+
+Em cada opção de modelo colocar a saída do modelo e sua respectiva métrica validação.
+
+4.	Para cada etapa anterior colocar comentários sobre a técnica utilizada e análise sobre as variáveis utilizadas e seus respectivos “achados"
+
+	Técnicas: Regressão logística, Árvore de decisão 
+
+5.	Com a métrica correta faça a comparação entre os diferentes algoritmos e qual foi o melhor entre eles.
+
+# Etapa 3:
+
+Faça um algoritmo que a partir das características físico-químicas dos vinhos defina grupos para auxiliar na importação de vinhos brancos.
+
+1.	Critérios de seleção e definição das variáveis segmentadoras
+
+2.	Análise Exploratória dos dados
+
+3.	Avaliação de outliers, indicar a exclusão ou não
+
+4.	Critério de padronização
+
+5.	Critérios para definição da quantidade de grupos (clusters)
+
+6.	Resultados encontrados – Caracterização dos Clusters
+
+7.	Para cada etapa anterior colocar comentários sobre a técnica utiliza e análise sobre as variáveis utilizadas e seus respectivos “achados”  
+
+8.	Utilizando componentes principais (PCA), explique sobre a quantidade de componentes e a interpretação dos componentes.
+
+9.	Defina os clusters com os componentes encontrados.
+
+10.	Quantos clusters utilizando os componentes encontrados
+
+11.	Resultados encontrados – Caracterização dos Clusters gerado com os componentes
+
+12.	Cruzar os clusters obtidos a partir das variáveis segmentadoras e clusters obtidos pelos componentes principais. O que aconteceu?
+
+	Técnicas: K-means, Cluster Hierárquico, Componentes Principais
