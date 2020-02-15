@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Rodrigo" />
+<meta name="author" content="Rodrigo, Robson, Julio, Flavio" />
 
 
 <title>Parte 2</title>
@@ -21,6 +21,7 @@
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
@@ -246,6 +247,9 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -276,9 +280,6 @@ $(document).ready(function () {
   <a href="index.html">Trabalho</a>
 </li>
 <li>
-  <a href="dados.html">Base de dados</a>
-</li>
-<li>
   <a href="part1.html">Parte 1</a>
 </li>
 <li>
@@ -297,11 +298,19 @@ $(document).ready(function () {
 
 <div class="fluid-row" id="header">
 
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">Parte 2</h1>
-<h4 class="author">Rodrigo</h4>
-<h4 class="date">18/12/2019</h4>
+<h4 class="author">Rodrigo, Robson, Julio, Flavio</h4>
+<h4 class="date">26/01/2020</h4>
 
 </div>
 
@@ -313,13 +322,30 @@ $(document).ready(function () {
 <h2>Regressão Logística</h2>
 <p>Vamos tratar a base de dados para tentar descobrir se um vinho é Bom ou Ruim através de suas características físico químicas. Consideramos que vinhos com nota &gt;=6 são de boa qualidade (Bom) e as outras notas com qualidade Ruim. Criaremos uma nova variável (newQuality), que possui valor= 1 quando o vinho é Bom e 0 Se for ruim</p>
 <pre class="r"><code>library(readr)
-`BaseWine_Red_e_White(1)` &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
+BaseWine_Red_e_White &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
      &quot;;&quot;, escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c(&quot;WHITE&quot;, 
          &quot;RED&quot;))), locale = locale(date_names = &quot;pt&quot;, 
          decimal_mark = &quot;,&quot;, grouping_mark = &quot;.&quot;), 
      trim_ws = TRUE)
 
-BaseQuality &lt;- `BaseWine_Red_e_White(1)`
+# remove duplicatas
+BaseWine_Red_e_White &lt;- BaseWine_Red_e_White %&gt;% distinct()
+
+# remove outliers
+for (x in c(&quot;fixedacidity&quot;, &quot;volatileacidity&quot;, &quot;citricacid&quot;,
+                    &quot;residualsugar&quot;, &quot;chlorides&quot;, &quot;freesulfurdioxide&quot;,
+                    &quot;totalsulfurdioxide&quot;, &quot;density&quot;, &quot;pH&quot;,
+                    &quot;sulphates&quot;, &quot;alcohol&quot;)) {
+
+  outliers &lt;- boxplot(BaseWine_Red_e_White[[x]], plot=FALSE, range=3)$out
+
+  if( !is.null(outliers) &amp; length(outliers) &gt; 0 ) {
+    BaseWine_Red_e_White &lt;- BaseWine_Red_e_White[-which(BaseWine_Red_e_White[[x]] %in% outliers),]
+  }
+}
+
+
+BaseQuality &lt;- BaseWine_Red_e_White
 BaseQuality$newQuality &lt;- ifelse(BaseQuality$quality &gt;=6, 1, 0)
 
 drops &lt;- c(&quot;id_vinho&quot;, &quot;Vinho&quot;, &quot;quality&quot;)
@@ -345,37 +371,37 @@ summary(modeloQuality)</code></pre>
 ## 
 ## Deviance Residuals: 
 ##     Min       1Q   Median       3Q      Max  
-## -3.3525  -0.9021   0.4439   0.7953   4.1030  
+## -2.7912  -0.8830   0.4221   0.7955   2.4464  
 ## 
 ## Coefficients:
 ##                      Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)         1.493e+02  4.815e+01   3.101 0.001927 ** 
-## fixedacidity        1.801e-01  6.030e-02   2.987 0.002819 ** 
-## volatileacidity    -4.161e+00  3.183e-01 -13.072  &lt; 2e-16 ***
-## citricacid         -5.299e-01  2.926e-01  -1.811 0.070116 .  
-## residualsugar       1.204e-01  1.989e-02   6.056  1.4e-09 ***
-## chlorides          -1.987e+00  1.151e+00  -1.726 0.084350 .  
-## freesulfurdioxide   2.033e-02  2.967e-03   6.854  7.2e-12 ***
-## totalsulfurdioxide -8.585e-03  1.042e-03  -8.240  &lt; 2e-16 ***
-## density            -1.619e+02  4.909e+01  -3.299 0.000971 ***
-## pH                  1.172e+00  3.481e-01   3.367 0.000760 ***
-## sulphates           2.681e+00  3.127e-01   8.575  &lt; 2e-16 ***
-## alcohol             7.058e-01  7.003e-02  10.077  &lt; 2e-16 ***
+## (Intercept)         42.305794  57.635108   0.734 0.462932    
+## fixedacidity         0.089989   0.068808   1.308 0.190933    
+## volatileacidity     -4.363693   0.349215 -12.496  &lt; 2e-16 ***
+## citricacid          -0.724160   0.319127  -2.269 0.023257 *  
+## residualsugar        0.082187   0.022956   3.580 0.000343 ***
+## chlorides           -2.219840   2.777154  -0.799 0.424104    
+## freesulfurdioxide    0.021932   0.003155   6.953 3.58e-12 ***
+## totalsulfurdioxide  -0.007446   0.001079  -6.900 5.20e-12 ***
+## density            -53.875078  58.737661  -0.917 0.359030    
+## pH                   0.627515   0.376767   1.666 0.095808 .  
+## sulphates            2.425217   0.363601   6.670 2.56e-11 ***
+## alcohol              0.918624   0.078716  11.670  &lt; 2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 6405.1  on 4871  degrees of freedom
-## Residual deviance: 5027.2  on 4860  degrees of freedom
-## AIC: 5051.2
+##     Null deviance: 6070.2  on 4634  degrees of freedom
+## Residual deviance: 4720.5  on 4623  degrees of freedom
+## AIC: 4744.5
 ## 
-## Number of Fisher Scoring iterations: 4</code></pre>
+## Number of Fisher Scoring iterations: 5</code></pre>
 <p>Aplicando os valores preditos na amostra. Temos um resumo da variável de predição e o histograma da distribuição</p>
 <pre class="r"><code>train$predito &lt;- fitted(modeloQuality)
 summary(train$predito)</code></pre>
-<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-## 0.000221 0.441535 0.676640 0.633005 0.848348 0.996374</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 0.02986 0.43909 0.68091 0.63754 0.85869 0.99230</code></pre>
 <pre class="r"><code>hist(train$predito)</code></pre>
 <p><img src="part2_files/figure-html/predvalhist-1.png" width="672" /></p>
 <p>Frequências Absolutas da variável predita</p>
@@ -383,30 +409,30 @@ summary(train$predito)</code></pre>
 table(train$fx_predito1,train$newQuality)</code></pre>
 <pre><code>##            
 ##               0   1
-##   [0,0.1)    47  11
-##   [0.1,0.2) 189  34
-##   [0.2,0.3) 231  86
-##   [0.3,0.4) 286 151
-##   [0.4,0.5) 245 212
-##   [0.5,0.6) 282 238
-##   [0.6,0.7) 187 379
-##   [0.7,0.8) 157 504
-##   [0.8,0.9) 129 746
-##   [0.9,1)    35 723</code></pre>
+##   [0,0.1)    43   6
+##   [0.1,0.2) 169  38
+##   [0.2,0.3) 237  75
+##   [0.3,0.4) 272 139
+##   [0.4,0.5) 236 203
+##   [0.5,0.6) 223 258
+##   [0.6,0.7) 178 338
+##   [0.7,0.8) 162 445
+##   [0.8,0.9) 118 706
+##   [0.9,1)    42 747</code></pre>
 <p>Frequências relativas</p>
 <pre class="r"><code>print(prop.table(table(train$fx_predito1,train$newQuality),2), digits=2)</code></pre>
 <pre><code>##            
-##                  0      1
-##   [0,0.1)   0.0263 0.0036
-##   [0.1,0.2) 0.1057 0.0110
-##   [0.2,0.3) 0.1292 0.0279
-##   [0.3,0.4) 0.1600 0.0490
-##   [0.4,0.5) 0.1370 0.0687
-##   [0.5,0.6) 0.1577 0.0772
-##   [0.6,0.7) 0.1046 0.1229
-##   [0.7,0.8) 0.0878 0.1634
-##   [0.8,0.9) 0.0721 0.2419
-##   [0.9,1)   0.0196 0.2344</code></pre>
+##                 0     1
+##   [0,0.1)   0.026 0.002
+##   [0.1,0.2) 0.101 0.013
+##   [0.2,0.3) 0.141 0.025
+##   [0.3,0.4) 0.162 0.047
+##   [0.4,0.5) 0.140 0.069
+##   [0.5,0.6) 0.133 0.087
+##   [0.6,0.7) 0.106 0.114
+##   [0.7,0.8) 0.096 0.151
+##   [0.8,0.9) 0.070 0.239
+##   [0.9,1)   0.025 0.253</code></pre>
 <pre class="r"><code>plot(train$fx_predito1 , train$newQuality)</code></pre>
 <p><img src="part2_files/figure-html/predfreqrel2-1.png" width="672" /></p>
 <p>Vamos montar a matriz de confusão. Para o corteurte, vamos escolher o 0,5</p>
@@ -415,11 +441,11 @@ MC_log_treino &lt;- table(train$newQuality, train$fx_predito , deparse.level = 2
 show(MC_log_treino)</code></pre>
 <pre><code>##                 train$fx_predito
 ## train$newQuality [0,0.5) [0.5,1)
-##                0     998     790
-##                1     494    2590</code></pre>
+##                0     957     723
+##                1     461    2494</code></pre>
 <pre class="r"><code>ACC_log = sum(diag(MC_log_treino))/sum(MC_log_treino)*100   
 show(ACC_log) </code></pre>
-<pre><code>## [1] 73.64532</code></pre>
+<pre><code>## [1] 74.45523</code></pre>
 <p>O Modelo teve uma acurácia de 73%, que pode ser um bom resultado dependendo do nível de confiança adotado.</p>
 </div>
 <div id="aplicando-modelo" class="section level2">
@@ -427,8 +453,8 @@ show(ACC_log) </code></pre>
 <p>Vamos agora aplicar o modelo na amostra de teste.</p>
 <pre class="r"><code>predito_log_teste &lt;- predict(modeloQuality,test,type = &quot;response&quot;)
 summary(predito_log_teste)   </code></pre>
-<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-## 0.001821 0.427668 0.676671 0.632927 0.856280 0.991117</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 0.04255 0.44014 0.67707 0.63606 0.85602 0.99402</code></pre>
 <p>Em seguida vamos plotar a distribuição da variável predita</p>
 <pre class="r"><code>hist(predito_log_teste)  </code></pre>
 <p><img src="part2_files/figure-html/testeSumplot-1.png" width="672" /></p>
@@ -438,12 +464,12 @@ MC_test_log &lt;- table(test$newQuality, test$Qual , deparse.level = 2)
 show(MC_test_log)</code></pre>
 <pre><code>##                test$Qual
 ## test$newQuality [0,0.5) [0.5,1)
-##               0     331     265
-##               1     175     854</code></pre>
+##               0     306     234
+##               1     169     837</code></pre>
 <p>Vamos calcular a acurácia do modelo na amostra teste.</p>
 <pre class="r"><code>ACC_test_log = sum(diag(MC_test_log))/sum(MC_test_log)*100  
 show(ACC_test_log) </code></pre>
-<pre><code>## [1] 72.92308</code></pre>
+<pre><code>## [1] 73.93273</code></pre>
 <p>Percebemos que o valor observado é próximo à amostra de teste. Podemos dizer que modelo não teve overfit aparente em relação aos dados treino.</p>
 <pre class="r"><code>plot(test$Qual , test$newQuality)</code></pre>
 <p><img src="part2_files/figure-html/testePlot-1.png" width="672" /></p>
@@ -451,20 +477,37 @@ show(ACC_test_log) </code></pre>
 <pre class="r"><code>print(prop.table(table(test$Qual ,test$newQuality),2),digits=2)</code></pre>
 <pre><code>##          
 ##              0    1
-##   [0,0.5) 0.56 0.17
-##   [0.5,1) 0.44 0.83</code></pre>
+##   [0,0.5) 0.57 0.17
+##   [0.5,1) 0.43 0.83</code></pre>
 </div>
 <div id="arvore-de-decisão" class="section level2">
 <h2>Arvore de Decisão</h2>
 <p>Vamos Limpar a memória do R e importar novamente as informações de Vinhos</p>
 <pre class="r"><code>library(readr)
-`BaseWine_Red_e_White(1)` &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
+BaseWine_Red_e_White &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
      &quot;;&quot;, escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c(&quot;WHITE&quot;, 
          &quot;RED&quot;))), locale = locale(date_names = &quot;pt&quot;, 
          decimal_mark = &quot;,&quot;, grouping_mark = &quot;.&quot;), 
      trim_ws = TRUE)
 
-BaseQuality &lt;- `BaseWine_Red_e_White(1)`
+# remove duplicatas
+BaseWine_Red_e_White &lt;- BaseWine_Red_e_White %&gt;% distinct()
+
+# remove outliers
+for (x in c(&quot;fixedacidity&quot;, &quot;volatileacidity&quot;, &quot;citricacid&quot;,
+                    &quot;residualsugar&quot;, &quot;chlorides&quot;, &quot;freesulfurdioxide&quot;,
+                    &quot;totalsulfurdioxide&quot;, &quot;density&quot;, &quot;pH&quot;,
+                    &quot;sulphates&quot;, &quot;alcohol&quot;)) {
+
+  outliers &lt;- boxplot(BaseWine_Red_e_White[[x]], plot=FALSE, range=3)$out
+
+  if( !is.null(outliers) &amp; length(outliers) &gt; 0 ) {
+    BaseWine_Red_e_White &lt;- BaseWine_Red_e_White[-which(BaseWine_Red_e_White[[x]] %in% outliers),]
+  }
+}
+
+
+BaseQuality &lt;- BaseWine_Red_e_White
 BaseQuality$newQuality &lt;- ifelse(BaseQuality$quality &gt;=6, 1, 0)
 BaseQuality$newQuality &lt;- factor(BaseQuality$newQuality)
 drops &lt;- c(&quot;id_vinho&quot;, &quot;Vinho&quot;, &quot;quality&quot;)
@@ -503,89 +546,88 @@ rpart.plot(modelo_tree_1)</code></pre>
 ##     citricacid + residualsugar + chlorides + freesulfurdioxide + 
 ##     totalsulfurdioxide + density + pH + sulphates + alcohol, 
 ##     data = train, control = rpart.control(cp = 0.05))
-##   n= 4872 
+##   n= 4635 
 ## 
 ##          CP nsplit rel error    xerror       xstd
-## 1 0.1423378      0 1.0000000 1.0000000 0.01881567
-## 2 0.0500000      2 0.7153244 0.7438479 0.01739118
+## 1 0.1601190      0 1.0000000 1.0000000 0.01948046
+## 2 0.1321429      1 0.8398810 0.9029762 0.01901502
+## 3 0.0500000      2 0.7077381 0.7160714 0.01776529
 ## 
 ## Variable importance
 ##            alcohol            density    volatileacidity          chlorides 
-##                 33                 18                 14                 12 
-##      residualsugar totalsulfurdioxide  freesulfurdioxide                 pH 
-##                  9                  8                  5                  1 
-##          sulphates 
-##                  1 
+##                 36                 17                 12                 10 
+##      residualsugar totalsulfurdioxide  freesulfurdioxide 
+##                 10                  9                  5 
 ## 
-## Node number 1: 4872 observations,    complexity param=0.1423378
-##   predicted class=1  expected loss=0.3669951  P(node) =1
-##     class counts:  1788  3084
-##    probabilities: 0.367 0.633 
-##   left son=2 (2482 obs) right son=3 (2390 obs)
+## Node number 1: 4635 observations,    complexity param=0.160119
+##   predicted class=1  expected loss=0.3624595  P(node) =1
+##     class counts:  1680  2955
+##    probabilities: 0.362 0.638 
+##   left son=2 (2095 obs) right son=3 (2540 obs)
 ##   Primary splits:
-##       alcohol         &lt; 10.35   to the left,  improve=299.66350, (0 missing)
-##       density         &lt; 0.99285 to the right, improve=175.11580, (0 missing)
-##       volatileacidity &lt; 0.535   to the right, improve=111.88950, (0 missing)
-##       chlorides       &lt; 0.0455  to the right, improve=109.99970, (0 missing)
-##       citricacid      &lt; 0.235   to the left,  improve= 92.82374, (0 missing)
+##       alcohol         &lt; 10.11667 to the left,  improve=311.18460, (0 missing)
+##       density         &lt; 0.992105 to the right, improve=163.49140, (0 missing)
+##       chlorides       &lt; 0.0395   to the right, improve=125.13410, (0 missing)
+##       volatileacidity &lt; 0.2425   to the right, improve= 93.25104, (0 missing)
+##       citricacid      &lt; 0.235    to the left,  improve= 86.47079, (0 missing)
 ##   Surrogate splits:
-##       density            &lt; 0.99409 to the right, agree=0.762, adj=0.514, (0 split)
-##       chlorides          &lt; 0.0415  to the right, agree=0.684, adj=0.356, (0 split)
-##       totalsulfurdioxide &lt; 140.5   to the right, agree=0.633, adj=0.252, (0 split)
-##       residualsugar      &lt; 7.075   to the right, agree=0.632, adj=0.249, (0 split)
-##       freesulfurdioxide  &lt; 43.75   to the right, agree=0.578, adj=0.140, (0 split)
+##       density            &lt; 0.995395 to the right, agree=0.766, adj=0.483, (0 split)
+##       chlorides          &lt; 0.0435   to the right, agree=0.671, adj=0.272, (0 split)
+##       residualsugar      &lt; 7.05     to the right, agree=0.668, adj=0.265, (0 split)
+##       totalsulfurdioxide &lt; 143.5    to the right, agree=0.661, adj=0.249, (0 split)
+##       freesulfurdioxide  &lt; 43.75    to the right, agree=0.615, adj=0.147, (0 split)
 ## 
-## Node number 2: 2482 observations,    complexity param=0.1423378
-##   predicted class=0  expected loss=0.4609186  P(node) =0.5094417
-##     class counts:  1338  1144
-##    probabilities: 0.539 0.461 
-##   left son=4 (1629 obs) right son=5 (853 obs)
+## Node number 2: 2095 observations,    complexity param=0.1321429
+##   predicted class=0  expected loss=0.4357995  P(node) =0.4519957
+##     class counts:  1182   913
+##    probabilities: 0.564 0.436 
+##   left son=4 (1563 obs) right son=5 (532 obs)
 ##   Primary splits:
-##       volatileacidity &lt; 0.2525  to the right, improve=130.10210, (0 missing)
-##       citricacid      &lt; 0.235   to the left,  improve= 44.21768, (0 missing)
-##       chlorides       &lt; 0.0635  to the right, improve= 32.65191, (0 missing)
-##       residualsugar   &lt; 8.975   to the left,  improve= 23.49456, (0 missing)
-##       alcohol         &lt; 9.85    to the left,  improve= 20.36710, (0 missing)
+##       volatileacidity   &lt; 0.235    to the right, improve=106.17090, (0 missing)
+##       citricacid        &lt; 0.245    to the left,  improve= 35.69798, (0 missing)
+##       chlorides         &lt; 0.0645   to the right, improve= 34.41895, (0 missing)
+##       residualsugar     &lt; 10.15    to the left,  improve= 27.81579, (0 missing)
+##       freesulfurdioxide &lt; 25.5     to the left,  improve= 17.44151, (0 missing)
 ##   Surrogate splits:
-##       pH            &lt; 3.005   to the right, agree=0.676, adj=0.057, (0 split)
-##       residualsugar &lt; 13.675  to the left,  agree=0.675, adj=0.055, (0 split)
-##       density       &lt; 0.99423 to the right, agree=0.672, adj=0.046, (0 split)
-##       sulphates     &lt; 0.375   to the right, agree=0.670, adj=0.040, (0 split)
-##       fixedacidity  &lt; 5.75    to the right, agree=0.662, adj=0.018, (0 split)
+##       pH                &lt; 2.945    to the right, agree=0.754, adj=0.030, (0 split)
+##       chlorides         &lt; 0.0295   to the right, agree=0.749, adj=0.011, (0 split)
+##       freesulfurdioxide &lt; 99.5     to the left,  agree=0.748, adj=0.009, (0 split)
+##       density           &lt; 0.99166  to the right, agree=0.748, adj=0.008, (0 split)
+##       sulphates         &lt; 0.335    to the right, agree=0.747, adj=0.002, (0 split)
 ## 
-## Node number 3: 2390 observations
-##   predicted class=1  expected loss=0.1882845  P(node) =0.4905583
-##     class counts:   450  1940
-##    probabilities: 0.188 0.812 
+## Node number 3: 2540 observations
+##   predicted class=1  expected loss=0.196063  P(node) =0.5480043
+##     class counts:   498  2042
+##    probabilities: 0.196 0.804 
 ## 
-## Node number 4: 1629 observations
-##   predicted class=0  expected loss=0.3437692  P(node) =0.3343596
-##     class counts:  1069   560
-##    probabilities: 0.656 0.344 
+## Node number 4: 1563 observations
+##   predicted class=0  expected loss=0.3429303  P(node) =0.3372168
+##     class counts:  1027   536
+##    probabilities: 0.657 0.343 
 ## 
-## Node number 5: 853 observations
-##   predicted class=1  expected loss=0.3153576  P(node) =0.1750821
-##     class counts:   269   584
-##    probabilities: 0.315 0.685</code></pre>
+## Node number 5: 532 observations
+##   predicted class=1  expected loss=0.2913534  P(node) =0.1147789
+##     class counts:   155   377
+##    probabilities: 0.291 0.709</code></pre>
 <p>Vamos aplicar a árvore de decisão na amostra de teste Em seguida exibiremos a matriz de confusão</p>
 <pre class="r"><code>predTree &lt;-predict(modelo_tree_1,test,type=&#39;class&#39;)
 MCpredTree&lt;-table(test$newQuality, predTree)
 MCpredTree</code></pre>
 <pre><code>##    predTree
 ##       0   1
-##   0 357 239
-##   1 189 840</code></pre>
+##   0 319 221
+##   1 193 813</code></pre>
 <p>Em seguida vamos calcular a acurácia do modelo de árvore de decisão. Podemos ver que o resultado(73,66%) é muito próximo ao obtido no modelo de regressão logística (72,92%)</p>
 <pre class="r"><code>diagonal &lt;- diag(MCpredTree)
 Acc_tree_teste &lt;- sum(diagonal)/sum(MCpredTree)
 print(Acc_tree_teste*100, digits=5)</code></pre>
-<pre><code>## [1] 73.662</code></pre>
+<pre><code>## [1] 73.221</code></pre>
 <p>Vamos calcular a matriz de confusão relativa.</p>
 <pre class="r"><code>print(prop.table(table(predTree,test$newQuality),2),digits=2)</code></pre>
 <pre><code>##         
 ## predTree    0    1
-##        0 0.60 0.18
-##        1 0.40 0.82</code></pre>
+##        0 0.59 0.19
+##        1 0.41 0.81</code></pre>
 <p>Assim como o modelo de regressão logística, a acurácia é muito maior para identificar vinhos Bons. Entretanto, o modelo de árvore de decisão apresentado consegue prever melhor (60%) os casos em que os vinhos não são de boa qualidade no outro modelo (56%)</p>
 </div>
 
@@ -622,6 +664,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

@@ -1,8 +1,10 @@
 ---
 title: "Parte 2"
-author: "Rodrigo"
-date: "18/12/2019"
-output: html_document
+author: "Rodrigo, Robson, Julio, Flavio"
+date: "26/01/2020"
+output:
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -30,13 +32,30 @@ Criaremos uma nova variável (newQuality), que possui valor= 1 quando o vinho é
 ```{r newQuality}
 
 library(readr)
-`BaseWine_Red_e_White(1)` <- read_delim("BaseWine_Red_e_White.csv", 
+BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
      ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
          "RED"))), locale = locale(date_names = "pt", 
          decimal_mark = ",", grouping_mark = "."), 
      trim_ws = TRUE)
 
-BaseQuality <- `BaseWine_Red_e_White(1)`
+# remove duplicatas
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>% distinct()
+
+# remove outliers
+for (x in c("fixedacidity", "volatileacidity", "citricacid",
+                    "residualsugar", "chlorides", "freesulfurdioxide",
+                    "totalsulfurdioxide", "density", "pH",
+                    "sulphates", "alcohol")) {
+
+  outliers <- boxplot(BaseWine_Red_e_White[[x]], plot=FALSE, range=3)$out
+
+  if( !is.null(outliers) & length(outliers) > 0 ) {
+    BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White[[x]] %in% outliers),]
+  }
+}
+
+
+BaseQuality <- BaseWine_Red_e_White
 BaseQuality$newQuality <- ifelse(BaseQuality$quality >=6, 1, 0)
 
 drops <- c("id_vinho", "Vinho", "quality")
@@ -163,13 +182,30 @@ gc()
 
 ```{r import}
 library(readr)
-`BaseWine_Red_e_White(1)` <- read_delim("BaseWine_Red_e_White.csv", 
+BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
      ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
          "RED"))), locale = locale(date_names = "pt", 
          decimal_mark = ",", grouping_mark = "."), 
      trim_ws = TRUE)
 
-BaseQuality <- `BaseWine_Red_e_White(1)`
+# remove duplicatas
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>% distinct()
+
+# remove outliers
+for (x in c("fixedacidity", "volatileacidity", "citricacid",
+                    "residualsugar", "chlorides", "freesulfurdioxide",
+                    "totalsulfurdioxide", "density", "pH",
+                    "sulphates", "alcohol")) {
+
+  outliers <- boxplot(BaseWine_Red_e_White[[x]], plot=FALSE, range=3)$out
+
+  if( !is.null(outliers) & length(outliers) > 0 ) {
+    BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White[[x]] %in% outliers),]
+  }
+}
+
+
+BaseQuality <- BaseWine_Red_e_White
 BaseQuality$newQuality <- ifelse(BaseQuality$quality >=6, 1, 0)
 BaseQuality$newQuality <- factor(BaseQuality$newQuality)
 drops <- c("id_vinho", "Vinho", "quality")

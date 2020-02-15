@@ -1,9 +1,22 @@
 ---
 title: "Equipe Centrão"
-author: "Centrao"
-date: "16/12/2019"
-output: html_document
+author: "Rodrigo, Robson, Julio, Flavio"
+date: "26/01/2020"
+output:
+  html_document:
+    code_folding: hide
 ---
+
+Alunos:
+
+336389 JÚLIO CÉZAR MOREIRA MENEZEZ
+
+335860 FLAVIO FARES BELLACOSA
+
+335794 ROBSON RIBEIRO DE SOUZA
+
+335820 RODRIGO HOKAMURA
+
 
 # Disciplina: IAeML
 

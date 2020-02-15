@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Centrao" />
+<meta name="author" content="Rodrigo, Robson, Julio, Flavio" />
 
 
 <title>Equipe Centrão</title>
@@ -21,6 +21,7 @@
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
@@ -246,6 +247,9 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -276,9 +280,6 @@ $(document).ready(function () {
   <a href="index.html">Trabalho</a>
 </li>
 <li>
-  <a href="dados.html">Base de dados</a>
-</li>
-<li>
   <a href="part1.html">Parte 1</a>
 </li>
 <li>
@@ -297,15 +298,28 @@ $(document).ready(function () {
 
 <div class="fluid-row" id="header">
 
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">Equipe Centrão</h1>
-<h4 class="author">Centrao</h4>
-<h4 class="date">16/12/2019</h4>
+<h4 class="author">Rodrigo, Robson, Julio, Flavio</h4>
+<h4 class="date">26/01/2020</h4>
 
 </div>
 
 
+<p>Alunos:</p>
+<p>336389 JÚLIO CÉZAR MOREIRA MENEZEZ</p>
+<p>335860 FLAVIO FARES BELLACOSA</p>
+<p>335794 ROBSON RIBEIRO DE SOUZA</p>
+<p>335820 RODRIGO HOKAMURA</p>
 <div id="disciplina-iaeml" class="section level1">
 <h1>Disciplina: IAeML</h1>
 <p>Trabalho: Conceitos Estatísticos para IA</p>
@@ -398,6 +412,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

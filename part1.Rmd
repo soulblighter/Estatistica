@@ -1,8 +1,10 @@
 ---
 title: "Parte 1"
-author: "Centrao"
-date: "16/12/2019"
-output: html_document
+author: "Rodrigo, Robson, Julio, Flavio"
+date: "26/01/2020"
+output:
+  html_document:
+    code_folding: hide
 ---
 
 
@@ -14,9 +16,13 @@ r["CRAN"] = "http://cran.us.r-project.org"
 options(repos = r)
 
 rm(list=ls(all=TRUE))
-list.of.packages <- c("rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly")
+list.of.packages <- c("caret", "scales", "car", "tidyverse", "ggplot2", "ggExtra", "readr", "rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly", "kableExtra", "knitr")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
+if(length(new.packages)) {
+  install.packages(new.packages)
+}
+
+lapply(list.of.packages, require, character.only = TRUE)
 ```
 
 
@@ -25,7 +31,6 @@ if(length(new.packages)) install.packages(new.packages)
 
 
 ```{r}
-library(readr)
 BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
      ";", escape_double = FALSE, col_types = cols(Vinho = col_factor(levels = c("WHITE", 
          "RED"))), locale = locale(date_names = "pt", 
@@ -36,90 +41,504 @@ BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv",
 
 ## 1.	Análise Exploratória dos dados
 
+
 Removemos a coluna id_vinho para não atrapalhar no modelo já que ela não tem nenhuma relação com os vinhos em si.
 
 ```{r}
-BaseWine_Red_e_White <- BaseWine_Red_e_White[,2:ncol(BaseWine_Red_e_White)]
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>% subset( select = -id_vinho )
 ```
+
+Verificamos que o data frame não tem nenhum valor NA.
+
+```{r}
+sum(is.na(BaseWine_Red_e_White)) 
+```
+
+Existem várias linhas duplicadas na base de dados.
+
+Iremos remover eles, já que não faz sentido manter informações nuplicadas nesse caso.
+
+Dados duplicados aumentam o tempo de processamento dos modelos, disperdiçando recursos além de que podem diminuir a acuracia do modelo.
+
+```{r}
+count(BaseWine_Red_e_White[duplicated(BaseWine_Red_e_White, fromLast = TRUE), ], Vinho)
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>% distinct()
+```
+
+
+## 2.	Exclusão de outliers, caso necessário (sempre explicando a opção)
+
+
+Analisando os dados.
+
+```{r, echo=FALSE}
+
+BaseWine_Red_e_White[1:10, ncol(BaseWine_Red_e_White):2] %>%
+  mutate(Vinho = cell_spec(
+    Vinho,
+    color = ifelse(Vinho == 'RED', "white", "black"),
+    bold = T,
+    background = ifelse(Vinho == 'RED', "red", "white")
+  )) %>%
+  kable(escape = F, align = "c") %>%
+  kable_styling(c("striped", "condensed"), full_width = F)
+
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>% filter(Vinho == "WHITE")
+BaseWine_Red_e_White_original <- BaseWine_Red_e_White
+#(BaseWine_Red_e_White_original%>% subset(select = -Vinho)) <- subset( BaseWine_Red_e_White, select = -Vinho )
+
+```
+
+## quality
+
+A nossa variável target é a "quality".
+
+
+```{r}
+p <- plot_ly(x = ~ BaseWine_Red_e_White$quality, type = "histogram", name = "Com outliers") %>%
+  layout(xaxis = list(title = "Quality"))
+p
+summary(BaseWine_Red_e_White$quality)
+```
+
+É possível ver que a maioria dos vinhos se encontra na qualidade 5 e 6.
+
+
+
+
+***
+## alcohol
+
+O teor alcoólico percentual do vinho.
+
+No histograma de alcohol podemos ver alguns valores extremamente discrepantes.
+
+Vamos remover os outilers utilizando a regra de 3 x intervalo interquartil.
+
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$alcohol, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$alcohol, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$alcohol %in% outliers),]
+}
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$alcohol, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+  
+p <- subplot(p1, p2) %>% layout(title = "Alcohol (%)")
+p
+summary(BaseWine_Red_e_White$alcohol)
+
+```
+
+Novo gráfico sem outilers. Somente o ponjtos extremos foram removidos.
+
+
+
+***
+## sulphates
+
+Um aditivo de vinho que pode contribuir para os níveis de gás de dióxido de enxofre (S02), que age como um antimicrobiano e antioxidante.
+
+É possível observar vários valores acima de 1 que vão atrapalhar no modelo.
+
+Histrograma verde mostra os valores após remover os oultiers.
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$sulphates, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$sulphates, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$sulphates %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$sulphates, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+summary(BaseWine_Red_e_White$sulphates)
+p <- subplot(p1, p2) %>% layout(title = "Sulfatos")
+p
+```
+
+
+
+***
+## pH
+
+Descreve como o vinho é acídico ou básico numa escala de 0 (muito ácido) a 14 (muito básico); a maioria dos vinhos tem entre 3-4 na escala de pH.
+
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$pH, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$pH, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$pH %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$pH, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "pH")
+p
+
+summary(BaseWine_Red_e_White$pH)
+```
+
+
+
+***
+## density
+
+A densidade é próxima à da água, dependendo do percentual de álcool e teor de açúcar.
+
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$density, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$density, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$density %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$density, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Densidade")
+p
+
+summary(BaseWine_Red_e_White$density)
+```
+
+
+
+***
+## totalsulfurdioxide
+
+Quantidade de formas livres e encadernadas de S02; em baixas concentrações, o SO2 é quase indetectável no vinho, mas nas concentrações de SO2 livre acima de 50 ppm, o SO2 se torna evidente no nariz e no sabor do vinho.
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$totalsulfurdioxide, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$totalsulfurdioxide, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$totalsulfurdioxide %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$totalsulfurdioxide, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Dióxido de enxofre total")
+p
+
+summary(BaseWine_Red_e_White$totalsulfurdioxide)
+```
+***
+## freesulfurdioxide
+
+A forma livre de SO2 existe em equilíbrio entre o SO2 molecular (como gás dissolvido) e o íon bissulfito; impede o crescimento microbiano e a oxidação do vinho. Garante condições melhores para os processos de vinificação da bebida, elimina bactérias e leveduras frágeis e indesejáveis, o que permite que apenas as melhores prossigam com o processo fermentativo. Além do mais, melhora o aroma e afina a cor da bebida
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$freesulfurdioxide, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$freesulfurdioxide, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$freesulfurdioxide %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$freesulfurdioxide, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Dióxido de enxofre livre")
+p
+
+summary(BaseWine_Red_e_White$freesulfurdioxide)
+```
+***
+## chlorides
+
+A quantidade de sal no vinho.
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$chlorides, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$chlorides, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$chlorides %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$chlorides, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Cloretos")
+p
+
+summary(BaseWine_Red_e_White$chlorides)
+```
+***
+## residualsugar
+
+A quantidade de açúcar restante depois que o processo de fermentação (em contato com a levedura, o açúcar da uva vai se transformando em álcool, ou seja, a fermentação vai ocorrendo)
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$residualsugar, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$residualsugar, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$residualsugar %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$residualsugar, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Açúcar residual")
+p
+
+summary(BaseWine_Red_e_White$residualsugar)
+```
+***
+## citricacid
+
+Encontrado em pequenas quantidades, o ácido cítrico pode adicionar “frescura” e sabor aos vinhos.
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$citricacid, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$citricacid, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$citricacid %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$citricacid, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Ácido cítrico")
+p
+
+summary(BaseWine_Red_e_White$citricacid)
+```
+***
+## volatileacidity
+
+A quantidade de ácido acético no vinho, que em níveis muito altos pode levar a um gosto desagradável de vinagre.
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$volatileacidity, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$volatileacidity, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$volatileacidity %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$volatileacidity, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Acidez volátil")
+p
+
+summary(BaseWine_Red_e_White$volatileacidity)
+```
+***
+## fixedacidity
+
+A maioria dos ácidos presentes no vinho ou fixos ou não voláteis (não evaporaram prontamente)
+
+```{r}
+p1 <- plot_ly(x = ~ BaseWine_Red_e_White_original$fixedacidity, type = "histogram", name = "Com outliers")
+
+outliers <- boxplot(BaseWine_Red_e_White$fixedacidity, plot=FALSE, range=3)$out
+
+if( !is.null(outliers) & length(outliers) > 0 ) {
+  BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White$fixedacidity %in% outliers),]
+}
+
+p2 <- plot_ly(x = ~ BaseWine_Red_e_White$fixedacidity, type = "histogram", name = "Sem outliers", marker = list(color = 'green'))
+
+p <- subplot(p1, p2) %>% layout(title = "Acidez fixa")
+p
+
+summary(BaseWine_Red_e_White$fixedacidity)
+```
+
+
+
+
+## Normalizar
+
+Aqui vamos normalizar os resutado (colocando eles entr 0 e 1).
+
+Todos os valores são maiores que zero.
+
+Observe que o método "lm" do  já faz algum tipo de normalização para evitar uma disparidade de importancia entre as colunas.
+
+Como vamos usar funções de R que ja fazem essa normatização automaticmente, na prática esse passo é desnecessário.
+
+```{r}
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>%
+    mutate_at(vars("fixedacidity", "volatileacidity", "citricacid",
+                   "residualsugar", "chlorides", "freesulfurdioxide",
+                   "totalsulfurdioxide", "density", "pH",
+                   "sulphates", "alcohol"),
+              rescale)
+```
+
+
+```{r}
+# Remove tipo
+BaseWine_Red_e_White <- subset( BaseWine_Red_e_White, select = -Vinho )
+```
+
+
+## Correlação
+
+```{r}
+
+cor_wine <- cor((BaseWine_Red_e_White_original%>% subset(select = -Vinho))[,1:ncol(BaseWine_Red_e_White)-1])
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(cor_wine, col=col(200),  
+         type="upper", 
+         tl.col="black",
+         # Combine with significance
+         )
+
+```
+
+A qualidade do vinho tem correlação positiva com a quantidade de Alcool e negativa com •	Densidade e Acidez volátil.
+
+
+
+# 3.	Treinamento dos modelos e Validação 
+# 4.	Para cada etapa anterior colocar comentários sobre a técnica utilizada e análise sobre as variáveis utilizadas e seus respectivos “achados”
+
+
+
+## Regressão linear
+
+
+```{r}
+
+lm_modelo <- lm(quality ~ fixedacidity + volatileacidity + citricacid + residualsugar + chlorides + freesulfurdioxide + totalsulfurdioxide + density + pH + sulphates + alcohol,
+               data=BaseWine_Red_e_White)
+summary(lm_modelo)
+
+```
+
+Visualmente ja da para observar que alguns dados não são interessantes no modelo, como o "totalsulfurdioxide", "citricacid" e "chlorides", pois eles tem o p-value muito baixo.
+
+
+## Modelo de regressão linear final
+
+Executando o ANOVA.
+
+```{r}
+
+lm_modelo_final <- lm(quality ~ fixedacidity + volatileacidity + residualsugar + freesulfurdioxide + density + pH + sulphates + alcohol,
+               data=BaseWine_Red_e_White)
+
+summary(lm_modelo_final)
+
+anova(lm_modelo_final)
+
+par(mfrow = c(2,2))
+plot(lm_modelo_final, which=c(1:4), pch =20)
+
+```
+
+Residual standard error: 0.7361 on 3738 degrees of freedom
+Multiple R-squared:  0.3063, Adjusted R-squared:  0.3049 
+F-statistic: 206.3 on 8 and 3738 DF,  p-value: < 2.2e-16
+
 
 
 
 ```{r}
 
-#comando para gerar em 3 linhas e duas colunas os histogramas
-par (mfrow=c(3,4))
+Val_pred <- predict(lm_modelo_final, interval = "prediction", level = 0.95)
 
-hist(BaseWine_Red_e_White$fixedacidity, xlab="fixedacidity", main=NULL)
-hist(BaseWine_Red_e_White$volatileacidity, xlab="volatileacidity", main=NULL)
-hist(BaseWine_Red_e_White$citricacid, xlab="citricacid", main=NULL)
-hist(BaseWine_Red_e_White$residualsugar, xlab="residualsugar", main=NULL)
-hist(BaseWine_Red_e_White$chlorides, xlab="chlorides", main=NULL)
-hist(BaseWine_Red_e_White$freesulfurdioxide, xlab="freesulfurdioxide", main=NULL)
-hist(BaseWine_Red_e_White$totalsulfurdioxide, xlab="totalsulfurdioxide", main=NULL)
-hist(BaseWine_Red_e_White$density, xlab="density", main=NULL)
-hist(BaseWine_Red_e_White$pH, xlab="pH", main=NULL)
-hist(BaseWine_Red_e_White$sulphates, xlab="sulphates", main=NULL)
-hist(BaseWine_Red_e_White$alcohol, xlab="alcohol", main=NULL)
-hist(BaseWine_Red_e_White$quality, xlab="quality", main=NULL)
 
+par(mfrow = c(2,2))
+plot(lm_modelo_final, which=c(1:4), pch =20)
+
+shapiro.test(residuals(lm_modelo_final))
 
 ```
 
+O p-value do Shapiro teste deu <5%, isso significa que os residuos não são normalmente distribuídos.
 
 
+## Modelo de arvore de regressão
 
 
 ```{r}
 
 
-par (mfrow=c(3,4))
+modelo_tree <- rpart (quality ~ fixedacidity + volatileacidity + residualsugar + density + pH + sulphates + alcohol,
+                      data=BaseWine_Red_e_White,
+                     cp = 0.005,maxdepth=6)
 
-boxplot(BaseWine_Red_e_White$fixedacidity, xlab="fixedacidity", main=NULL)
-boxplot(BaseWine_Red_e_White$volatileacidity, xlab="volatileacidity", main=NULL)
-boxplot(BaseWine_Red_e_White$citricacid, xlab="citricacid", main=NULL)
-boxplot(BaseWine_Red_e_White$residualsugar, xlab="residualsugar", main=NULL)
-boxplot(BaseWine_Red_e_White$chlorides, xlab="chlorides", main=NULL)
-boxplot(BaseWine_Red_e_White$freesulfurdioxide, xlab="freesulfurdioxide", main=NULL)
-boxplot(BaseWine_Red_e_White$totalsulfurdioxide, xlab="totalsulfurdioxide", main=NULL)
-boxplot(BaseWine_Red_e_White$density, xlab="density", main=NULL)
-boxplot(BaseWine_Red_e_White$pH, xlab="pH", main=NULL)
-boxplot(BaseWine_Red_e_White$sulphates, xlab="sulphates", main=NULL)
-boxplot(BaseWine_Red_e_White$alcohol, xlab="alcohol", main=NULL)
-boxplot(BaseWine_Red_e_White$quality, xlab="quality", main=NULL)
+
+fancyRpartPlot(modelo_tree, cex=0.60)
+
+Val_pred_tree <- predict(modelo_tree,interval = "prediction", level = 0.95)
+
+mse_tree <- mean((BaseWine_Red_e_White$quality  - Val_pred_tree)^2)
+sqrt(mse_tree)
+
+erro_usando_media <- mean((BaseWine_Red_e_White$quality  - mean(BaseWine_Red_e_White$quality ))^2)
+sqrt(erro_usando_media)
+
+qqnorm(residuals(modelo_tree), ylab="Resíduos",xlab="Quantis teóricos",main="")
+qqline(residuals(modelo_tree))
+
+shapiro.test(residuals(modelo_tree))
 
 
 ```
 
 
+# 5.	Com a métrica correta faça a comparação entre os diferentes algoritmos e qual foi o melhor entre eles.
 
 
-
-# 2.	Exclusão de outliers
-
-
+## Matrix de confusão Regressão Linear:
 
 ```{r}
+BaseWine_Red_e_White$lm_predict <- round(predict(lm_modelo_final, BaseWine_Red_e_White))
 
-mod <- lm(quality ~ ., data=BaseWine_Red_e_White)
-cooksd <- cooks.distance(mod)
+lm.matriz.confusao <- confusionMatrix(
+  data = factor(BaseWine_Red_e_White$lm_predict),
+  reference = factor(BaseWine_Red_e_White$quality),
+  dnn = c("Predito LM", "Encontrado"),
+  mode = "everything")
 
-plot(cooksd, pch=".", cex=2, main="Outliers")
-abline(h = 4*mean(cooksd, na.rm=T), col="red")  # Linha de corte
-#text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  # add labels```
-
+lm.matriz.confusao
 ```
 
+
+
+## Matrix de confusão Arvore de regressão:
 
 ```{r}
+BaseWine_Red_e_White$tree_predict <- round(predict(modelo_tree, BaseWine_Red_e_White))
 
-influential = 4*mean(cooksd, na.rm=T)  # influential row numbers
-head(BaseWine_Red_e_White[influential, ])  # influential observations.
+tree.matriz.confusao <- confusionMatrix(
+  data = factor(BaseWine_Red_e_White$tree_predict),
+  reference = factor(BaseWine_Red_e_White$quality),
+  dnn = c("Predito Tree", "Encontrado"),
+  mode = "everything")
 
+tree.matriz.confusao
 ```
 
 
 
+A acuracia do regressão linear foi de 52% e da arvore de regressão 51%.
 
+Uma performance bem similar. Porém nos dois casos a acurária foi muito baixa.
+
+Olhando a matrix de confusão, da para perceber que os modelos erram complemtamente os vinhos com qualidade muito baixa ou muito alta.
+
+Não houve nenhum acerto nas qualidade extremas 3 e 9 e poucos nas qualidades 4 e 8. 
 
 
 

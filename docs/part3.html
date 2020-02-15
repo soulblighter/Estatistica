@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Robson Ribeiro de Souza" />
+<meta name="author" content="Rodrigo, Robson, Julio, Flavio" />
 
 
 <title>Parte 3</title>
@@ -21,6 +21,7 @@
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
@@ -246,6 +247,9 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -276,9 +280,6 @@ $(document).ready(function () {
   <a href="index.html">Trabalho</a>
 </li>
 <li>
-  <a href="dados.html">Base de dados</a>
-</li>
-<li>
   <a href="part1.html">Parte 1</a>
 </li>
 <li>
@@ -297,162 +298,90 @@ $(document).ready(function () {
 
 <div class="fluid-row" id="header">
 
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">Parte 3</h1>
-<h4 class="author">Robson Ribeiro de Souza</h4>
-<h4 class="date">18/12/2019</h4>
+<h4 class="author">Rodrigo, Robson, Julio, Flavio</h4>
+<h4 class="date">26/01/2020</h4>
 
 </div>
 
 
 <div id="etapa-3" class="section level1">
 <h1>ETAPA 3</h1>
-<div id="lendo-o-arquivo-csv" class="section level2">
-<h2>Lendo o arquivo csv</h2>
-<pre class="r"><code>library(readr)
-BaseWine_Red_e_White &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
+<p>##Faça um algoritmo que a partir das características físico-químicas dos vinhos defina grupos para auxiliar na importação de vinhos brancos. ## Lendo o arquivo csv</p>
+<pre class="r"><code>BaseWine_Red_e_White &lt;- read_delim(&quot;BaseWine_Red_e_White.csv&quot;, 
     &quot;;&quot;, escape_double = FALSE, col_types = cols(volatileacidity = col_double()), 
     locale = locale(decimal_mark = &quot;,&quot;), 
     trim_ws = TRUE)
-#View(BaseWine_Red_e_White)</code></pre>
-</div>
-<div id="deixar-apenas-variáveis-ccom-características-físico-químicas" class="section level2">
-<h2>Deixar apenas variáveis ccom características físico-químicas</h2>
+
+# remove duplicatas
+BaseWine_Red_e_White &lt;- BaseWine_Red_e_White %&gt;% distinct()
+
+# remove outliers
+for (x in c(&quot;fixedacidity&quot;, &quot;volatileacidity&quot;, &quot;citricacid&quot;,
+                    &quot;residualsugar&quot;, &quot;chlorides&quot;, &quot;freesulfurdioxide&quot;,
+                    &quot;totalsulfurdioxide&quot;, &quot;density&quot;, &quot;pH&quot;,
+                    &quot;sulphates&quot;, &quot;alcohol&quot;)) {
+
+  outliers &lt;- boxplot(BaseWine_Red_e_White[[x]], plot=FALSE, range=3)$out
+
+  if( !is.null(outliers) &amp; length(outliers) &gt; 0 ) {
+    BaseWine_Red_e_White &lt;- BaseWine_Red_e_White[-which(BaseWine_Red_e_White[[x]] %in% outliers),]
+  }
+}</code></pre>
+<div id="deixar-apenas-variáveis-com-características-físico-químicas" class="section level2">
+<h2>Deixar apenas variáveis com características físico-químicas</h2>
 </div>
 <div id="excluindo-as-variáveis-id_vinho-quality-e-vinho" class="section level2">
 <h2>Excluindo as variáveis : id_vinho, quality e vinho</h2>
-<pre class="r"><code>BaseVinhos &lt;- BaseWine_Red_e_White[,c(2,3,4,5,6,7,8,9,10,11,12)]
+<pre class="r"><code>BaseVinhos &lt;- BaseWine_Red_e_White
+BaseVinhos &lt;- subset( BaseVinhos, select = -id_vinho )
+BaseVinhos &lt;- subset( BaseVinhos, select = -quality )
 #view(BaseVinhos)</code></pre>
 </div>
-<div id="gerando-uma-amostra-aleatória" class="section level2">
-<h2>Gerando uma amostra aleatória</h2>
-<pre class="r"><code>set.seed(10)
-amostra_vinhos &lt;- BaseVinhos[sample(1:nrow(BaseVinhos), 600),]
-#View(amostra_vinhos)</code></pre>
-</div>
-<div id="verificando-o-novo-formato-das-variáveis" class="section level2">
-<h2>Verificando o novo formato das variáveis</h2>
-<pre class="r"><code>str(amostra_vinhos)</code></pre>
-<pre><code>## Classes &#39;tbl_df&#39;, &#39;tbl&#39; and &#39;data.frame&#39;:    600 obs. of  11 variables:
-##  $ fixedacidity      : num  7.9 7.2 6.3 10.1 7.3 7.1 5.6 5.2 7.2 6.9 ...
-##  $ volatileacidity   : num  0.28 0.23 0.18 0.37 0.19 0.72 0.32 0.34 0.19 0.48 ...
-##  $ citricacid        : num  0.41 0.38 0.36 0.34 0.49 0 0.32 0.37 0.39 0.2 ...
-##  $ residualsugar     : num  4.9 14.3 1.2 2.4 15.6 ...
-##  $ chlorides         : num  0.058 0.058 0.034 0.085 0.058 0.123 0.043 0.031 0.036 0.082 ...
-##  $ freesulfurdioxide : num  31 55 26 5 50 6 32 42 32 9 ...
-##  $ totalsulfurdioxide: num  153 194 111 17 134 14 105 133 85 23 ...
-##  $ density           : num  0.997 0.998 0.991 0.997 1 ...
-##  $ pH                : num  3.27 3.09 3.16 3.17 3.42 3.45 3.24 3.25 3.16 3.39 ...
-##  $ sulphates         : num  0.51 0.44 0.51 0.65 0.36 0.58 0.47 0.41 0.5 0.43 ...
-##  $ alcohol           : num  9.7 9 11 10.6 9.1 9.8 11.2 12.5 10.5 9.05 ...</code></pre>
-</div>
-<div id="estatísticas-descritivas-da-nova-base" class="section level2">
-<h2>Estatísticas descritivas da nova base</h2>
-<pre class="r"><code>summary(amostra_vinhos)</code></pre>
-<pre><code>##   fixedacidity    volatileacidity    citricacid     residualsugar   
-##  Min.   : 3.900   Min.   :0.1100   Min.   :0.0000   Min.   : 0.600  
-##  1st Qu.: 6.400   1st Qu.:0.2300   1st Qu.:0.2500   1st Qu.: 1.800  
-##  Median : 7.000   Median :0.2900   Median :0.3100   Median : 2.950  
-##  Mean   : 7.178   Mean   :0.3351   Mean   :0.3254   Mean   : 5.355  
-##  3rd Qu.: 7.600   3rd Qu.:0.4000   3rd Qu.:0.4000   3rd Qu.: 7.725  
-##  Max.   :15.500   Max.   :0.9650   Max.   :1.0000   Max.   :31.600  
-##    chlorides       freesulfurdioxide totalsulfurdioxide    density      
-##  Min.   :0.01600   Min.   :  1.00    Min.   :  6.00     Min.   :0.9874  
-##  1st Qu.:0.03800   1st Qu.: 17.00    1st Qu.: 81.75     1st Qu.:0.9923  
-##  Median :0.04700   Median : 28.00    Median :118.00     Median :0.9945  
-##  Mean   :0.05769   Mean   : 30.62    Mean   :115.66     Mean   :0.9946  
-##  3rd Qu.:0.06200   3rd Qu.: 42.00    3rd Qu.:155.25     3rd Qu.:0.9967  
-##  Max.   :0.61000   Max.   :289.00    Max.   :440.00     Max.   :1.0103  
-##        pH          sulphates        alcohol     
-##  Min.   :2.740   Min.   :0.270   Min.   : 8.60  
-##  1st Qu.:3.110   1st Qu.:0.430   1st Qu.: 9.50  
-##  Median :3.200   Median :0.500   Median :10.40  
-##  Mean   :3.217   Mean   :0.537   Mean   :10.59  
-##  3rd Qu.:3.320   3rd Qu.:0.620   3rd Qu.:11.40  
-##  Max.   :3.810   Max.   :2.000   Max.   :14.00</code></pre>
-<pre class="r"><code>attach(amostra_vinhos)</code></pre>
-</div>
-<div id="comando-para-gerar-em-3-linhas-e-4-colunas-os-histogramas" class="section level2">
-<h2>Comando para gerar em 3 linhas e 4 colunas os histogramas</h2>
-<pre class="r"><code>par (mfrow=c(3,4))
-hist(fixedacidity)
-hist(volatileacidity)
-hist(citricacid)
-hist(residualsugar)
-hist(chlorides)
-hist(freesulfurdioxide)
-hist(totalsulfurdioxide)
-hist(density)
-hist(pH)
-hist(sulphates)
-hist(alcohol)
-par (mfrow=c(1,1))</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-</div>
-<div id="boxplot-da-amostra---geral" class="section level2">
-<h2>Boxplot da Amostra - Geral</h2>
-<pre class="r"><code>boxplot(amostra_vinhos)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-</div>
-<div id="boxplot-da-amostra-por-variável" class="section level2">
-<h2>Boxplot da Amostra por variável</h2>
-<pre class="r"><code>attach(amostra_vinhos)</code></pre>
-<pre><code>## The following objects are masked from amostra_vinhos (pos = 3):
-## 
-##     alcohol, chlorides, citricacid, density, fixedacidity,
-##     freesulfurdioxide, pH, residualsugar, sulphates,
-##     totalsulfurdioxide, volatileacidity</code></pre>
-<pre class="r"><code>par (mfrow=c(1,1))
-boxplot(fixedacidity)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
-<pre class="r"><code>boxplot(volatileacidity)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-2.png" width="672" /></p>
-<pre class="r"><code>boxplot(citricacid)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-3.png" width="672" /></p>
-<pre class="r"><code>boxplot(residualsugar)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-4.png" width="672" /></p>
-<pre class="r"><code>boxplot(chlorides)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-5.png" width="672" /></p>
-<pre class="r"><code>boxplot(freesulfurdioxide)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-6.png" width="672" /></p>
-<pre class="r"><code>boxplot(totalsulfurdioxide)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-7.png" width="672" /></p>
-<pre class="r"><code>boxplot(density)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-8.png" width="672" /></p>
-<pre class="r"><code>boxplot(pH)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-9.png" width="672" /></p>
-<pre class="r"><code>boxplot(sulphates)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-10.png" width="672" /></p>
-<pre class="r"><code>boxplot(alcohol)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-9-11.png" width="672" /></p>
-<pre class="r"><code>par (mfrow=c(1,1))</code></pre>
+<div id="filtando-para-usar-apenas-os-vinhos-brancos" class="section level2">
+<h2>Filtando para usar apenas os vinhos Brancos</h2>
+<pre class="r"><code>#set.seed(10)
+#amostra_vinhos &lt;- BaseVinhos[sample(1:nrow(BaseVinhos), 600),]
+#View(amostra_vinhos)
+
+amostra_vinhos &lt;- BaseVinhos %&gt;% filter(Vinho == &quot;WHITE&quot;)
+amostra_vinhos &lt;- subset( amostra_vinhos, select = -Vinho )</code></pre>
 </div>
 <div id="padronizando" class="section level2">
 <h2>Padronizando</h2>
 <pre class="r"><code>cluster_vinhos &lt;- scale(amostra_vinhos)
 summary(cluster_vinhos)</code></pre>
-<pre><code>##   fixedacidity     volatileacidity     citricacid      residualsugar    
-##  Min.   :-2.5626   Min.   :-1.4569   Min.   :-2.1834   Min.   :-1.0100  
-##  1st Qu.:-0.6082   1st Qu.:-0.6803   1st Qu.:-0.5058   1st Qu.:-0.7551  
-##  Median :-0.1392   Median :-0.2920   Median :-0.1032   Median :-0.5109  
-##  Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.0000  
-##  3rd Qu.: 0.3299   3rd Qu.: 0.4198   3rd Qu.: 0.5007   3rd Qu.: 0.5033  
-##  Max.   : 6.5057   Max.   : 4.0762   Max.   : 4.5268   Max.   : 5.5741  
-##    chlorides        freesulfurdioxide totalsulfurdioxide    density        
-##  Min.   :-0.93189   Min.   :-1.4995   Min.   :-1.94202   Min.   :-2.41503  
-##  1st Qu.:-0.44007   1st Qu.:-0.6894   1st Qu.:-0.60055   1st Qu.:-0.76996  
-##  Median :-0.23887   Median :-0.1326   Median : 0.04141   Median :-0.01004  
-##  Mean   : 0.00000   Mean   : 0.0000   Mean   : 0.00000   Mean   : 0.00000  
-##  3rd Qu.: 0.09646   3rd Qu.: 0.5762   3rd Qu.: 0.70108   3rd Qu.: 0.73549  
-##  Max.   :12.34733   Max.   :13.0809   Max.   : 5.74378   Max.   : 5.32968  
-##        pH            sulphates          alcohol       
-##  Min.   :-2.8857   Min.   :-1.6616   Min.   :-1.6399  
-##  1st Qu.:-0.6460   1st Qu.:-0.6657   1st Qu.:-0.8973  
-##  Median :-0.1012   Median :-0.2300   Median :-0.1547  
-##  Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.0000  
-##  3rd Qu.: 0.6252   3rd Qu.: 0.5169   3rd Qu.: 0.6704  
-##  Max.   : 3.5913   Max.   : 9.1065   Max.   : 2.8158</code></pre>
+<pre><code>##   fixedacidity      volatileacidity     citricacid      residualsugar    
+##  Min.   :-3.65758   Min.   :-2.0015   Min.   :-2.9108   Min.   :-1.1641  
+##  1st Qu.:-0.66004   1st Qu.:-0.6790   1st Qu.:-0.5351   1st Qu.:-0.9430  
+##  Median :-0.06054   Median :-0.1704   Median :-0.1391   Median :-0.2397  
+##  Mean   : 0.00000   Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.0000  
+##  3rd Qu.: 0.53897   3rd Qu.: 0.4400   3rd Qu.: 0.4328   3rd Qu.: 0.7047  
+##  Max.   : 4.61562   Max.   : 6.4420   Max.   : 4.2164   Max.   : 3.9499  
+##    chlorides        freesulfurdioxide  totalsulfurdioxide    density       
+##  Min.   :-2.59012   Min.   :-2.04437   Min.   :-3.07030   Min.   :-2.3669  
+##  1st Qu.:-0.57809   1st Qu.:-0.74566   1st Qu.:-0.71329   1st Qu.:-0.7904  
+##  Median :-0.05646   Median :-0.06538   Median :-0.09428   Median :-0.1035  
+##  Mean   : 0.00000   Mean   : 0.00000   Mean   : 0.00000   Mean   : 0.0000  
+##  3rd Qu.: 0.46518   3rd Qu.: 0.67674   3rd Qu.: 0.69139   3rd Qu.: 0.7208  
+##  Max.   : 7.02291   Max.   : 4.75842   Max.   : 5.44112   Max.   : 3.0735  
+##        pH             sulphates          alcohol       
+##  Min.   :-3.11159   Min.   :-2.3574   Min.   :-2.0528  
+##  1st Qu.:-0.66022   1st Qu.:-0.6990   1st Qu.:-0.8345  
+##  Median :-0.06394   Median :-0.1752   Median :-0.1036  
+##  Mean   : 0.00000   Mean   : 0.0000   Mean   : 0.0000  
+##  3rd Qu.: 0.59860   3rd Qu.: 0.5231   3rd Qu.: 0.7086  
+##  Max.   : 4.17628   Max.   : 5.1494   Max.   : 2.9826</code></pre>
 </div>
 <div id="método-hierarquico" class="section level2">
 <h2>Método hierarquico</h2>
@@ -466,7 +395,7 @@ rect.hclust(hier_cluster, k=5, border=&quot;red&quot;)
 groups &lt;- cutree(hier_cluster, k=6) # cut tree into 5 clusters
 # draw dendogram with red borders around the 5 clusters
 rect.hclust(hier_cluster, k=6, border=&quot;blue&quot;) </code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
 </div>
 <div id="determine-number-of-clusters" class="section level2">
 <h2>Determine number of clusters</h2>
@@ -475,14 +404,14 @@ for (i in 2:15) wss[i] &lt;- sum(kmeans(cluster_vinhos ,iter.max=100,
                                      centers=i)$withinss)
 plot(1:15, wss, type=&quot;b&quot;, xlab=&quot;Numero de Clusters&quot;,
      ylab=&quot;Within groups sum of squares&quot;) </code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
 <div id="forma-gráfica" class="section level2">
 <h2>Forma gráfica</h2>
 <pre class="r"><code>library(tclust)
 cluster1 &lt;- tkmeans(cluster_vinhos, k = 4, alpha = 0.00)
 plot(cluster1)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 </div>
 <div id="gerando-a-quantidade-de-cluster-com-kmeans" class="section level2">
 <h2>Gerando a quantidade de cluster com Kmeans</h2>
@@ -491,31 +420,31 @@ output_cluster &lt;- kmeans(cluster_vinhos,5)
 segmento &lt;- output_cluster$cluster
 table(segmento)</code></pre>
 <pre><code>## segmento
-##   1   2   3   4   5 
-## 133  77  71 168 151</code></pre>
+##    1    2    3    4    5 
+##  919  941  766 1053 1123</code></pre>
 </div>
 <div id="quais-características-de-cada-cluster" class="section level2">
 <h2>Quais características de cada cluster</h2>
 <pre class="r"><code>centros &lt;- output_cluster$centers
 centros</code></pre>
-<pre><code>##   fixedacidity volatileacidity   citricacid residualsugar  chlorides
-## 1   -0.1091745      -0.4467523  0.339747345     1.4491672 -0.1148212
-## 2   -0.1239224       1.8019407 -1.382514343    -0.5894972  0.4349919
-## 3    1.8064123       0.5392347  0.799340343    -0.5596454  1.1119120
-## 4   -0.3327272      -0.4497629 -0.004968721    -0.3091786 -0.1333458
-## 5   -0.3198336      -0.2785224  0.035422440    -0.3686829 -0.4951445
-##   freesulfurdioxide totalsulfurdioxide    density          pH   sulphates
-## 1        0.89634000         0.99251511  0.9726685 -0.47257468 -0.36523740
-## 2       -0.73810184        -1.16764681  0.3750265  1.00961442  0.35040758
-## 3       -0.75861356        -1.22991252  0.8928993 -0.06879207  1.32520933
-## 4       -0.03266009         0.33909365 -0.2492838  0.20111081 -0.01028491
-## 5       -0.02007233        -0.07774602 -1.1904512 -0.29000171 -0.46865435
+<pre><code>##   fixedacidity volatileacidity  citricacid residualsugar  chlorides
+## 1   -0.0502304      0.14755859 -0.04111787     0.7107334  0.3240887
+## 2   -0.6671802      0.51828161 -0.35282613    -0.5538075 -0.7670458
+## 3    0.3337598     -0.05348752  0.52690499     1.3710766  0.7416630
+## 4    0.9635779     -0.18668188  0.29695422    -0.5086857 -0.2818551
+## 5   -0.5310145     -0.34351013 -0.30855325    -0.5758056  0.1359147
+##   freesulfurdioxide totalsulfurdioxide    density          pH  sulphates
+## 1         1.1312495          1.2177226  0.8543160  0.08198055  0.2006119
+## 2        -0.4381814         -0.7747465 -1.1359722  0.26169880 -0.2313513
+## 3         0.1539397          0.3502910  1.3054801 -0.64827983 -0.1438937
+## 4        -0.5508767         -0.4952864 -0.3996269 -0.68255195 -0.3134994
+## 5        -0.1470474         -0.1218495 -0.2630073  0.79582445  0.4217958
 ##      alcohol
-## 1 -0.9159104
-## 2 -0.1187895
-## 3  0.1590916
-## 4 -0.3200398
-## 5  1.1485699</code></pre>
+## 1 -0.7420609
+## 2  1.2851632
+## 3 -0.9747309
+## 4  0.3176718
+## 5 -0.1026262</code></pre>
 <pre class="r"><code># quantas rodadas até chegar nos clusters
 Qte_iter &lt;- output_cluster$iter
 Qte_iter</code></pre>
@@ -525,24 +454,24 @@ Qte_iter</code></pre>
 <h2>Mostrando Resultados</h2>
 <pre class="r"><code>aggregate(amostra_vinhos,by=list(segmento),FUN=mean)</code></pre>
 <pre><code>##   Group.1 fixedacidity volatileacidity citricacid residualsugar  chlorides
-## 1       1     7.038346       0.2660902  0.3760150     12.178571 0.05254887
-## 2       2     7.019481       0.6135714  0.1193506      2.579870 0.07714286
-## 3       3     9.488732       0.4184507  0.4445070      2.720423 0.10742254
-## 4       4     6.752381       0.2656250  0.3246429      3.899702 0.05172024
-## 5       5     6.768874       0.2920861  0.3306623      3.619536 0.03553642
+## 1       1     6.808596       0.2912514  0.3261371      9.930087 0.04810664
+## 2       2     6.294049       0.3276939  0.2907120      3.637035 0.03346440
+## 3       3     7.128851       0.2714883  0.3906919     13.216319 0.05371018
+## 4       4     7.654131       0.2583951  0.3645584      3.861586 0.03997531
+## 5       5     6.407614       0.2429786  0.2957435      3.527560 0.04558148
 ##   freesulfurdioxide totalsulfurdioxide   density       pH sulphates   alcohol
-## 1          48.32331          171.70677 0.9974282 3.138647 0.4782707  9.477444
-## 2          16.03896           49.72727 0.9956626 3.383506 0.5932468 10.443506
-## 3          15.63380           46.21127 0.9971925 3.205352 0.7498592 10.780282
-## 4          29.97321          134.80952 0.9938182 3.249940 0.5352976 10.199603
-## 5          30.22185          111.27152 0.9910377 3.168808 0.4616556 11.979470</code></pre>
+## 1          53.34929           189.1072 0.9964886 3.202024 0.5130577  9.613856
+## 2          27.97184           105.4187 0.9906938 3.229150 0.4635707 12.109954
+## 3          37.54634           152.6730 0.9978022 3.091802 0.4735901  9.327372
+## 4          26.14957           117.1567 0.9928377 3.086629 0.4541595 10.918693
+## 5          32.67943           132.8419 0.9932355 3.309768 0.5383972 10.401184</code></pre>
 </div>
 <div id="mostrando-resultados-em-gráficos" class="section level2">
 <h2>Mostrando Resultados em gráficos</h2>
 <pre class="r"><code>library(cluster)
 clusplot(cluster_vinhos, output_cluster$cluster, color=TRUE, shade=TRUE,
          labels=2, lines=0 , cex=0.75)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
 </div>
 <div id="junta-os-arquivos-em-colunas" class="section level2">
 <h2>Junta os arquivos em colunas</h2>
@@ -554,50 +483,50 @@ clusplot(cluster_vinhos, output_cluster$cluster, color=TRUE, shade=TRUE,
 <pre class="r"><code>acpcor &lt;- prcomp(cluster_vinhos, scale = TRUE) 
 summary(acpcor)</code></pre>
 <pre><code>## Importance of components:
-##                           PC1    PC2    PC3     PC4    PC5     PC6    PC7
-## Standard deviation     1.7157 1.5741 1.2382 1.03770 0.8630 0.80036 0.7468
-## Proportion of Variance 0.2676 0.2253 0.1394 0.09789 0.0677 0.05823 0.0507
-## Cumulative Proportion  0.2676 0.4929 0.6322 0.73014 0.7978 0.85608 0.9068
+##                           PC1    PC2    PC3     PC4    PC5     PC6     PC7
+## Standard deviation     1.8399 1.2580 1.1171 1.01007 0.9844 0.89706 0.84071
+## Proportion of Variance 0.3077 0.1439 0.1134 0.09275 0.0881 0.07316 0.06425
+## Cumulative Proportion  0.3077 0.4516 0.5651 0.65780 0.7459 0.81906 0.88331
 ##                            PC8     PC9    PC10    PC11
-## Standard deviation     0.68765 0.56655 0.44878 0.17358
-## Proportion of Variance 0.04299 0.02918 0.01831 0.00274
-## Cumulative Proportion  0.94977 0.97895 0.99726 1.00000</code></pre>
+## Standard deviation     0.75917 0.63199 0.54207 0.11822
+## Proportion of Variance 0.05239 0.03631 0.02671 0.00127
+## Cumulative Proportion  0.93571 0.97202 0.99873 1.00000</code></pre>
 <pre class="r"><code>plot(1:ncol(cluster_vinhos), acpcor$sdev^2, type = &quot;b&quot;, xlab = &quot;Componente&quot;,
      ylab = &quot;Variância&quot;, pch = 20, cex.axis = 0.8, cex.lab = 0.8)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
 <pre class="r"><code>sum(acpcor$sdev^2)</code></pre>
 <pre><code>## [1] 11</code></pre>
 <pre class="r"><code>acpcor$rotation[, 1:7]</code></pre>
-<pre><code>##                            PC1         PC2         PC3          PC4         PC5
-## fixedacidity       -0.20164973  0.38858843 -0.32939168 -0.300707598  0.09072176
-## volatileacidity    -0.38344674  0.09610343  0.31754638 -0.086341625 -0.45796964
-## citricacid          0.15548143  0.25286366 -0.56370548  0.178653105  0.28529659
-## residualsugar       0.37053309  0.25134649  0.21985410 -0.272509190  0.17514470
-## chlorides          -0.22536902  0.37502020 -0.03358035  0.431486347 -0.36561968
-## freesulfurdioxide   0.42665876  0.01824237  0.06477640  0.402170666 -0.18130054
-## totalsulfurdioxide  0.50701262  0.01844721  0.07150118  0.243407589 -0.14762091
-## density             0.02390505  0.54944462  0.30678072 -0.172814635  0.25789524
-## pH                 -0.19933066 -0.19580879  0.46192293  0.308551073  0.59691196
-## sulphates          -0.29822168  0.25142733 -0.05908000  0.513514611  0.21767031
-## alcohol            -0.17806097 -0.40974220 -0.32117290 -0.002643661  0.10691020
+<pre><code>##                            PC1          PC2         PC3         PC4         PC5
+## fixedacidity        0.14718243 -0.602789215  0.06995369 -0.04286739  0.25085410
+## volatileacidity    -0.01623242  0.097406800 -0.55757938  0.26078979  0.66882744
+## citricacid          0.13747769 -0.366126370  0.50272003  0.03313571  0.08125045
+## residualsugar       0.41684405 -0.002689212 -0.18219612  0.16929359 -0.11482371
+## chlorides           0.27914541  0.080643270 -0.14747188 -0.53839212  0.05191332
+## freesulfurdioxide   0.29664861  0.241435825  0.28756470  0.53587557 -0.10617232
+## totalsulfurdioxide  0.39790427  0.214335669  0.13194028  0.29870085  0.17945028
+## density             0.50476376  0.002842487 -0.10909193 -0.12614130 -0.03278847
+## pH                 -0.11737056  0.580079841  0.17647970 -0.20047407 -0.04774022
+## sulphates           0.04443853  0.209364951  0.46693359 -0.27492282  0.63319542
+## alcohol            -0.43660888 -0.045084018  0.12396009  0.32009035  0.13962575
 ##                            PC6         PC7
-## fixedacidity       -0.25166475  0.53702922
-## volatileacidity    -0.38603876  0.03018223
-## citricacid          0.07911905 -0.09721891
-## residualsugar      -0.33463329 -0.56679260
-## chlorides           0.19475067 -0.30055944
-## freesulfurdioxide  -0.38617931  0.39468447
-## totalsulfurdioxide -0.12301453  0.11220363
-## density            -0.08903507  0.06284699
-## pH                  0.02108722  0.18913715
-## sulphates          -0.26611440 -0.15089349
-## alcohol            -0.62290932 -0.24246724</code></pre>
+## fixedacidity       -0.04235438 -0.14303080
+## volatileacidity    -0.09302066  0.30836079
+## citricacid         -0.11946675  0.69246695
+## residualsugar       0.49518550  0.11347298
+## chlorides          -0.60682989 -0.02119535
+## freesulfurdioxide  -0.28352017 -0.22595660
+## totalsulfurdioxide -0.26623587 -0.03757312
+## density             0.31284394  0.10602104
+## pH                  0.07827971  0.46826946
+## sulphates           0.32547346 -0.32835090
+## alcohol            -0.02514992  0.02864928</code></pre>
 <pre class="r"><code>biplot(acpcor, xlab = &quot;CP1&quot;, ylab = &quot;CP2&quot;,cex.lab = 1.0, cex.axis = 1.0)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <pre class="r"><code>acpcor &lt;- prcomp(cluster_vinhos, scale = TRUE, retx = TRUE)
 escore1 &lt;- acpcor$x[, 1]
 hist(escore1)</code></pre>
-<p><img src="part3_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p><img src="part3_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
 </div>
 </div>
 
@@ -634,6 +563,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

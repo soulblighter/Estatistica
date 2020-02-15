@@ -1,119 +1,80 @@
 ---
 title: "Parte 3"
-author: "Robson Ribeiro de Souza"
-date: "18/12/2019"
-output: html_document
+author: "Rodrigo, Robson, Julio, Flavio"
+date: "26/01/2020"
+output:
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
 options(repos = r)
 
 rm(list=ls(all=TRUE))
-list.of.packages <- c("rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly")
+list.of.packages <- c("car", "tidyverse", "ggplot2", "ggExtra", "readr", "rpart", "rpart.plot", "rattle", "corrgram", "corrplot", "tclust", "rstudioapi", "cluster", "fpc", "dplyr", "plotly", "kableExtra", "knitr")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-library(rpart) 
-library(rpart.plot) 
+if(length(new.packages)) {
+    install.packages(new.packages)
+}
+
+lapply(list.of.packages, require, character.only = TRUE)
 ```
 
 # ETAPA 3
+##Faça um algoritmo que a partir das características físico-químicas dos vinhos defina grupos para auxiliar na importação de vinhos brancos.
 ## Lendo o arquivo csv
 ```{r}
-library(readr)
 BaseWine_Red_e_White <- read_delim("BaseWine_Red_e_White.csv", 
     ";", escape_double = FALSE, col_types = cols(volatileacidity = col_double()), 
     locale = locale(decimal_mark = ","), 
     trim_ws = TRUE)
-#View(BaseWine_Red_e_White)
+
+# remove duplicatas
+BaseWine_Red_e_White <- BaseWine_Red_e_White %>% distinct()
+
+# remove outliers
+for (x in c("fixedacidity", "volatileacidity", "citricacid",
+                    "residualsugar", "chlorides", "freesulfurdioxide",
+                    "totalsulfurdioxide", "density", "pH",
+                    "sulphates", "alcohol")) {
+
+  outliers <- boxplot(BaseWine_Red_e_White[[x]], plot=FALSE, range=3)$out
+
+  if( !is.null(outliers) & length(outliers) > 0 ) {
+    BaseWine_Red_e_White <- BaseWine_Red_e_White[-which(BaseWine_Red_e_White[[x]] %in% outliers),]
+  }
+}
 ```
 
 
-## Deixar apenas variáveis ccom características físico-químicas
+## Deixar apenas variáveis com características físico-químicas
 ## Excluindo as variáveis : id_vinho, quality e vinho
 
 ```{r}
 
-BaseVinhos <- BaseWine_Red_e_White[,c(2,3,4,5,6,7,8,9,10,11,12)]
+BaseVinhos <- BaseWine_Red_e_White
+BaseVinhos <- subset( BaseVinhos, select = -id_vinho )
+BaseVinhos <- subset( BaseVinhos, select = -quality )
 #view(BaseVinhos)
 
 ```
 
 
-## Gerando uma amostra aleatória
+## Filtando para usar apenas os vinhos Brancos
 
 ```{r}
 
-set.seed(10)
-amostra_vinhos <- BaseVinhos[sample(1:nrow(BaseVinhos), 600),]
+#set.seed(10)
+#amostra_vinhos <- BaseVinhos[sample(1:nrow(BaseVinhos), 600),]
 #View(amostra_vinhos)
 
-```
+amostra_vinhos <- BaseVinhos %>% filter(Vinho == "WHITE")
+amostra_vinhos <- subset( amostra_vinhos, select = -Vinho )
 
-
-## Verificando o novo formato das variáveis
-
-```{r}
-str(amostra_vinhos)
-```
-
-
-## Estatísticas descritivas da nova base
-
-```{r}
-
-summary(amostra_vinhos)
-
-```
-
-```{r}
-attach(amostra_vinhos)
-```
-
-
-## Comando para gerar em 3 linhas e 4 colunas os histogramas
-```{r}
-par (mfrow=c(3,4))
-hist(fixedacidity)
-hist(volatileacidity)
-hist(citricacid)
-hist(residualsugar)
-hist(chlorides)
-hist(freesulfurdioxide)
-hist(totalsulfurdioxide)
-hist(density)
-hist(pH)
-hist(sulphates)
-hist(alcohol)
-par (mfrow=c(1,1))
-
-```
-
-
-## Boxplot da Amostra - Geral
-```{r}
-boxplot(amostra_vinhos)
-```
-
-## Boxplot da Amostra por variável
-```{r}
-attach(amostra_vinhos)
-
-par (mfrow=c(1,1))
-boxplot(fixedacidity)
-boxplot(volatileacidity)
-boxplot(citricacid)
-boxplot(residualsugar)
-boxplot(chlorides)
-boxplot(freesulfurdioxide)
-boxplot(totalsulfurdioxide)
-boxplot(density)
-boxplot(pH)
-boxplot(sulphates)
-boxplot(alcohol)
-par (mfrow=c(1,1))
 ```
 
 

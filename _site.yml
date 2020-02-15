@@ -4,8 +4,6 @@ navbar:
   left:
     - text: "Trabalho"
       href: index.html
-    - text: "Base de dados"
-      href: dados.html
     - text: "Parte 1"
       href: part1.html
     - text: "Parte 2"
